@@ -1,19 +1,19 @@
+<!-- templates/users/home.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
 </head>
 <body>
-    <h2>Welcome, {{ user.username }}</h2>
-    <p>Status: {{ status }}</p>
-    {% if status == "Verified" %}
-        <h3>Assigned Clients:</h3>
+    <h2>Status: {{ status }}</h2>
+    {% if products %}
+        <h3>Assigned Products:</h3>
         <ul>
-        {% for client in clients %}
-            <li>{{ client.name }}</li>
-        {% empty %}
-            <li>No clients assigned</li>
-        {% endfor %}
+            {% for product in products %}
+                <li>{{ product.name }}</li>
+            {% endfor %}
         </ul>
     {% endif %}
 </body>

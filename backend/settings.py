@@ -52,7 +52,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
+]
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -105,9 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    # Add other origins as needed
+    "http://localhost:3000"
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -147,6 +149,26 @@ EMAIL_USE_TLS = True  # or EMAIL_USE_SSL = True for SSL
 EMAIL_HOST_USER = 'rishab0724@gmail.com'
 EMAIL_HOST_PASSWORD = 'ynzbjnclhpjnaxbn'
 
+# # SECURITY SETTINGS
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# CSRF_COOKIE_SAMESITE = None
+# SESSION_COOKIE_SAMESITE = None
+# SESSION_COOKIE_HTTPONLY = True
+# CSRF_COOKIE_HTTPONLY = False
+# SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
 
+# # FOR PRODUCTION
+# # CSRF_COOKIE_HTTPONLY = True
+# # SESSION_COOKIE_HTTPONLY = True
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'sessionid'
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # Change to True in production with HTTPS
+SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+

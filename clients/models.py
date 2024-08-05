@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import User
 
+
 class Client(models.Model):
     name = models.CharField(max_length=255)
     company_profile = models.TextField()
@@ -39,6 +40,8 @@ class Prospect(models.Model):
 
     def __str__(self):
         return f"{self.company_name} - {self.poc_first_name} {self.poc_last_name}"
+    
+
 
 class Meeting(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
