@@ -130,7 +130,14 @@ def generate_jwt_token(user):
         'iat': datetime.datetime.now(),  # Issued at time
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-    return token
+    return tokenclass UserProductsView(APIView):
+   
+
+    def get(self, request):
+        user = request.user
+        products = Product.objects.filter(assigned_users=user)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
 
 @csrf_exempt
 def verify_otp_login(request, user_id):
