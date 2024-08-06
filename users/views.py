@@ -23,7 +23,8 @@ from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
 import jwt
 import datetime
-SECRET_KEY = 'your-secret-key'
+from clients.models import Product
+from clients.serializers import ProductSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,14 @@ def signin(request):
         logger.error(f"Error during login process: {e}")
         return HttpResponseServerError('An error occurred during login. Please try again later.')
 
+class UserProductsView(APIView):
+   
 
+    def get(self, request):
+        user = request.user
+        products = Product.objects.filter(assigned_users=user)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
 
 @csrf_exempt
 def verify_otp_login(request, user_id):
