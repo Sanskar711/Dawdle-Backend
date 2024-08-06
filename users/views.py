@@ -23,7 +23,7 @@ from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
 import jwt
 import datetime
-SECRET_KEY = 'your-secret-key'
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,14 @@ def signin(request):
         logger.error(f"Error during login process: {e}")
         return HttpResponseServerError('An error occurred during login. Please try again later.')
 
-
+def generate_jwt_token(user):
+    payload = {
+        'user_id': user.id,
+        'exp': datetime.datetime.utcnow() + timedelta(hours=1),  # Set expiration time
+        'iat': datetime.datetime.utcnow(),  # Issued at time
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    return token
 
 @csrf_exempt
 def verify_otp_login(request, user_id):
@@ -142,14 +149,11 @@ def verify_otp_login(request, user_id):
         if otp and otp.is_valid():
             otp.is_used = True
             otp.delete()
-            login(request, user)  # Log the user in
-            request.session['user_id'] = user.id  # Set user ID in the session
-            request.session.save()  # Ensure session is saved
-            token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, SECRET_KEY, algorithm='HS256')
+            login(request, user)
+            token = generate_jwt_token(user)
             return JsonResponse({"message": "User verified successfully", "token": token}, status=200)
-        else:
-            return JsonResponse({"error": "Invalid or expired OTP"}, status=400)
-
+        return JsonResponse({"error": "Invalid or expired OTP"}, status=400)
+    
     return JsonResponse({"message": "Invalid request method"}, status=405)
 
 @login_required
@@ -208,3 +212,12 @@ class UserProfileDetail(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+    
+class UserVerificationStatusView(APIView):
+    def get(self, request):
+        user = request.user
+        if user is None or user.is_anonymous:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        is_verified = user.isverified  # Assuming you have this field in your User model
+        return JsonResponse({"is_verified": is_verified})

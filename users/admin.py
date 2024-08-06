@@ -8,7 +8,7 @@ class UserAdmin(admin.ModelAdmin):
     actions = ['verify_users']
 
     def verify_users(self, request, queryset):
-        queryset.update(is_verified=True)
+        queryset.update(isverified=True)
     verify_users.short_description = "Verify selected users"
 @admin.register(OTP)
 class OTPAdmin(admin.ModelAdmin):
