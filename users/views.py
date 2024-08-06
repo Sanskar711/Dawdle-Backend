@@ -3,8 +3,7 @@ from django.contrib.auth import login, logout
 from .models import User, OTP
 from django.contrib.auth.decorators import login_required
 from django.utils.crypto import get_random_string
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -24,7 +23,9 @@ from rest_framework.permissions import IsAuthenticated
 import jwt
 import datetime
 from django.conf import settings
-
+from clients.models import Product
+from clients.serializers import ProductSerializer
+from datetime import timedelta
 logger = logging.getLogger(__name__)
 
 def send_otp(user):
@@ -125,8 +126,8 @@ def signin(request):
 def generate_jwt_token(user):
     payload = {
         'user_id': user.id,
-        'exp': datetime.datetime.utcnow() + timedelta(hours=1),  # Set expiration time
-        'iat': datetime.datetime.utcnow(),  # Issued at time
+        'exp': datetime.datetime.now() + timedelta(hours=1),  # Set expiration time
+        'iat': datetime.datetime.now(),  # Issued at time
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
     return token
@@ -221,3 +222,12 @@ class UserVerificationStatusView(APIView):
 
         is_verified = user.isverified  # Assuming you have this field in your User model
         return JsonResponse({"is_verified": is_verified})
+
+class UserProductsView(APIView):
+   
+
+    def get(self, request):
+        user = request.user
+        products = Product.objects.filter(assigned_users=user)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)

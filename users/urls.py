@@ -12,5 +12,6 @@ urlpatterns = [
     # path('profile/', views.UserProfileDetail.as_view(), name='api_profile'),
     # path('debug_session/',views.debug_session_view,name='debugsession'),
     # path('users/logout/', views.logout_view, name='logout_view'),
-    path('verification-status/',views.UserVerificationStatusView.as_view(),name='verification-status')
+    path('verification-status/',views.UserVerificationStatusView.as_view(),name='verification-status'),
+    path('user-products/', views.UserProductsView.as_view(), name='user-products'),
 ]
