@@ -94,9 +94,7 @@ class UserProductsView(APIView):
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
-class UseCaseViewSet(viewsets.ModelViewSet):
-    queryset = UseCase.objects.all()
-    serializer_class = UseCaseSerializer
+
 
 class ProspectViewSet(viewsets.ModelViewSet):
     queryset = Prospect.objects.all()

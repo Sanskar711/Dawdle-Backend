@@ -26,6 +26,16 @@ from django.conf import settings
 from clients.models import Product
 from clients.serializers import ProductSerializer
 from datetime import timedelta
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from clients.models import Product, Prospect, UseCase
+from clients.serializers import ProductSerializer, ProspectSerializer, UseCaseSerializer
+from rest_framework.decorators import action
+from rest_framework import viewsets
+
+
 logger = logging.getLogger(__name__)
 
 def send_otp(user):
@@ -130,7 +140,9 @@ def generate_jwt_token(user):
         'iat': datetime.datetime.now(),  # Issued at time
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-    return tokenclass UserProductsView(APIView):
+    return token
+
+class UserProductsView(APIView):
    
 
     def get(self, request):
@@ -189,38 +201,47 @@ class DashboardView(APIView):
             'successful_meetings': successful_meetings,
         })
 
-def logout_view(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({"detail":"You are not logged in"},status=400)
-    logout(request)
-    return JsonResponse({"detail":"You are now logged out"},status=200)
-
-@login_required
-def session_view(request):
-    user_id = request.session.get('user_id')
-    return JsonResponse({"authenticated": True, "user_id": user_id})
+# @login_required
+# def session_view(request):
+#     user_id = request.session.get('user_id')
+#     return JsonResponse({"authenticated": True, "user_id": user_id})
 
 
-def debug_session_view(request):
-    session_data = request.session.items()
-    session_info = {key: value for key, value in session_data}
-    return JsonResponse({"session": session_info})
+# def debug_session_view(request):
+#     session_data = request.session.items()
+#     session_info = {key: value for key, value in session_data}
+#     return JsonResponse({"session": session_info})
 
-def logout_view(request):
-    logout(request)
-    response = JsonResponse({"message": "User logged out successfully"})
-    response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-    response['Access-Control-Allow-Credentials'] = 'true'
-    return response
+# def logout_view(request):
+#     logout(request)
+#     response = JsonResponse({"message": "User logged out successfully"})
+#     response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+#     response['Access-Control-Allow-Credentials'] = 'true'
+#     return response
+class UserLogoutView(APIView):
+    def get(self, request):
+        user = request.user
+        if user is None or user.is_anonymous:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
 
+        logout(request)  # Assuming you have this field in your User model
+        return JsonResponse({"User logged Out"})
 class UserProfileDetail(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_object(self):
+        print(self.request.user)
         return self.request.user
     
+    def put(self, request, *args, **kwargs):
+        """
+        Handle PUT requests, which will update the user's profile.
+        """
+        return self.update(request, *args, **kwargs)
+
+    
+
 class UserVerificationStatusView(APIView):
     def get(self, request):
         user = request.user
@@ -230,11 +251,68 @@ class UserVerificationStatusView(APIView):
         is_verified = user.isverified  # Assuming you have this field in your User model
         return JsonResponse({"is_verified": is_verified})
 
-class UserProductsView(APIView):
-   
 
-    def get(self, request):
-        user = request.user
-        products = Product.objects.filter(assigned_users=user)
-        serializer = ProductSerializer(products, many=True)
+
+
+class ProductInfoView(APIView):
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProductSerializer(product)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProductProspectsView(APIView):
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        prospects = Prospect.objects.filter(product=product)
+        serializer = ProspectSerializer(prospects, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProductUseCasesView(APIView):
+    def get(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        use_cases = product.use_cases
+        serializer = UseCaseSerializer(use_cases, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UseCaseDetailView(APIView):
+    def get(self, request, product_id, usecase_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        use_case = product.use_cases.filter(id=usecase_id).first()
+        if not use_case:
+            return Response({"error": "Use case not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UseCaseSerializer(use_case)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
+
+class UseCaseViewSet(viewsets.ModelViewSet):
+    queryset = UseCase.objects.all()
+    serializer_class = UseCaseSerializer
+
+    @action(detail=True, methods=['get'])
+    def details(self, request, pk=None):
+        """
+        Get detailed information about a specific use case.
+        """
+        use_case = self.get_object(request.id)
+        serializer = UseCaseSerializer(use_case)
         return Response(serializer.data)
