@@ -77,3 +77,18 @@ class MeetingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Meeting
         fields = '__all__'
+
+class AssignProspectsSerializer(serializers.Serializer):
+    prospect_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True
+    )
+
+    def validate_prospect_ids(self, value):
+        if not all(Prospect.objects.filter(id=prospect_id).exists() for prospect_id in value):
+            raise serializers.ValidationError("One or more prospects do not exist.")
+        return value
+
+    def update(self, instance, validated_data):
+        prospects = Prospect.objects.filter(id__in=validated_data['prospect_ids'])
+        instance.product_prospects.add(*prospects)
+        return instance

@@ -106,22 +106,22 @@ class UseCase(models.Model):
 class Prospect(models.Model):
     
     company_name = models.CharField(max_length=255)
-    poc_first_name = models.CharField(max_length=255)
-    poc_last_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=10, unique=True)
-    designation = models.CharField(max_length=255)
-    linkedin_id = models.CharField(max_length=255)
     is_approved = models.BooleanField(default=False)
-    is_locked = models.BooleanField(default=False)
+    geography = models.CharField(max_length=255, help_text="Geographic location of the prospect",default="Undefined")
+    STATUS_CHOICES = [
+        ('scheduled', 'Meeting Scheduled'),
+        ('completed', 'Meeting Completed'),
+        ('closed', 'Deal Closed'),
+        ('open', 'Open For Meeting'),
+    ]
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='open', help_text="Current status of the prospect")
 
     def __str__(self):
-        return f"{self.company_name} - {self.poc_first_name} {self.poc_last_name}"
+        return f"{self.company_name}"
     
 
 
 from django.db import models
-from django.contrib.auth.models import User
 
 class QualifyingQuestionResponse(models.Model):
     qualifying_question = models.ForeignKey('QualifyingQuestion', on_delete=models.CASCADE)
@@ -141,8 +141,6 @@ class Meeting(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
     scheduled_at = models.DateTimeField()
-    completed = models.BooleanField(default=False)
-    is_successful = models.BooleanField(default=False)
     
     # New Fields
     qualifying_question_responses = models.ManyToManyField(QualifyingQuestionResponse, related_name='meetings')

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import Client, Product, UseCase, Prospect, Meeting
-from .serializers import ClientSerializer, ProductSerializer, UseCaseSerializer, ProspectSerializer, MeetingSerializer
+from .serializers import ClientSerializer, ProductSerializer, UseCaseSerializer, ProspectSerializer, MeetingSerializer,QualifyingQuestionSerializer
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
 
@@ -27,6 +27,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         user_id = request.user.id
         assigned_products = Product.objects.filter(assigned_users=user_id)
         serializer = ProductSerializer(assigned_products, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    def get_assigned_questions(self, request, pk=None):
+        user_id = request.user.id
+        assigned_questions = Product.objects.filter(assigned_users=user_id)
+        serializer = QualifyingQuestionSerializer(assigned_questions, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])

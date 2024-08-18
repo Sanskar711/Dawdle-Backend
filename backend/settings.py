@@ -149,6 +149,7 @@ EMAIL_PORT = 587  # or 465 for SSL
 EMAIL_USE_TLS = True  # or EMAIL_USE_SSL = True for SSL
 EMAIL_HOST_USER = 'rishab0724@gmail.com'
 EMAIL_HOST_PASSWORD = 'ynzbjnclhpjnaxbn'
+ADMIN_EMAIL = 'rishikesh@dawdle.live'  # Add this line
 
 # # SECURITY SETTINGS
 # SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -170,8 +171,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
