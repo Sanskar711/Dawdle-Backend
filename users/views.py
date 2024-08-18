@@ -380,22 +380,23 @@ class UseCaseViewSet(viewsets.ModelViewSet):
         use_case = self.get_object(request.id)
         serializer = UseCaseSerializer(use_case)
         return Response(serializer.data)
-   
+    
 
-
-class AssignProspectsToProductView(APIView):
-    def post(self, request, product_id, *args, **kwargs):
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = AssignProspectsSerializer(
-            instance=product, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Prospects successfully assigned."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def add_prospect_to_product(request, product_id, prospect_id):
+    # Fetch the product and prospect using the provided IDs
+    product = get_object_or_404(Product, id=product_id)
+    prospect = get_object_or_404(Prospect, id=prospect_id)
+    
+    # Add the prospect to the product's list of prospects
+    product.product_prospects.add(prospect)
+    
+    # Optionally, you could return some useful response, like the updated list of prospects
+    return JsonResponse({
+        "message": "Prospect added to product successfully.",
+        "product_id": product_id,
+        "prospect_id": prospect_id,
+        "total_prospects": product.product_prospects.count(),
+    })
 
 @csrf_exempt
 def create_prospect(request):
@@ -430,9 +431,10 @@ def create_meeting(request):
             scheduled_at = data.get('scheduled_at')
             other_relevant_details = data.get('other_relevant_details')
             use_case_titles = data.get('use_cases', [])
+            product_id=data.get('product_id')
             # print(responses)
             # Check for required fields
-            if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at):
+            if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at and product_id):
                 return JsonResponse({"error": "All required fields must be provided."}, status=400)
 
             # Fetch the related objects
@@ -440,7 +442,10 @@ def create_meeting(request):
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 return JsonResponse({"error": "User not found."}, status=404)
-
+            try:
+                prod = Product.objects.get(id=product_id)
+            except User.DoesNotExist:
+                return JsonResponse({"error": "Product not found."}, status=404)
             try:
                 prospect = Prospect.objects.get(id=prospect_id)
             except Prospect.DoesNotExist:
@@ -459,6 +464,7 @@ def create_meeting(request):
                     poc_designation=poc_designation,
                     other_relevant_details=other_relevant_details,
                     status='scheduled',
+                    product=prod,
                 )
             except Exception as e:
                 print("Error creating Meeting:", str(e))

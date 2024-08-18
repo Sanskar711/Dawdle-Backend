@@ -23,7 +23,7 @@ urlpatterns = [
     path('product/<int:product_id>/usecases/<int:usecase_id>/', views.UseCaseDetailView.as_view(), name='usecase-details'),
     path('product/<int:product_id>/questions/', views.ProductQuestions.as_view(), name='product-questions'),
     path('prospects/create/', views.create_prospect, name='prospect-create'),
-    path('products/<int:product_id>/assign-prospects/', views.AssignProspectsToProductView.as_view(), name='assign-prospects-to-product'),
     path('meetings/create/', views.create_meeting, name='create-meeting'),
     path('meetings/', views.UserMeetingsAPI.as_view(), name='user-meetings'),
+    path('products/<int:product_id>/add_prospect/<int:prospect_id>/', views.add_prospect_to_product, name='add_prospect_to_product'),
 ]
