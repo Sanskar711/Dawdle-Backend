@@ -18,6 +18,7 @@ urlpatterns = [
     path('verification-status/',views.UserVerificationStatusView.as_view(),name='verification-status'),
     path('user-products/', views.UserProductsView.as_view(), name='user-products'),
     path('product/<int:product_id>/info/', views.ProductInfoView.as_view(), name='product-info'),
+    path('prospect/<int:prospect_id>/info/', views.ProspectInfoView.as_view(), name='prospect-info'),
     path('product/<int:product_id>/prospects/', views.ProductProspectsView.as_view(), name='product-prospects'),
     path('product/<int:product_id>/usecases/', views.ProductUseCasesView.as_view(), name='product-usecases'),
     path('product/<int:product_id>/usecases/<int:usecase_id>/', views.UseCaseDetailView.as_view(), name='usecase-details'),
@@ -26,4 +27,5 @@ urlpatterns = [
     path('meetings/create/', views.create_meeting, name='create-meeting'),
     path('meetings/', views.UserMeetingsAPI.as_view(), name='user-meetings'),
     path('products/<int:product_id>/add_prospect/<int:prospect_id>/', views.add_prospect_to_product, name='add_prospect_to_product'),
+    path('meetings/<int:meeting_id>/', views.meeting_detail, name='meeting_detail'),
 ]

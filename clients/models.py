@@ -134,8 +134,7 @@ class Meeting(models.Model):
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
         ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('rescheduled', 'Rescheduled'),
+        ('closed', 'Closed'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)

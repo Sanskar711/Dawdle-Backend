@@ -525,3 +525,29 @@ class UserMeetingsAPI(APIView):
         meetings=Meeting.objects.filter(user=user.id)
         serializer = MeetingSerializer(meetings, many=True)
         return Response(serializer.data)
+class ProspectInfoView(APIView):
+    def get(self, request, prospect_id):
+        try:
+            prospect = Prospect.objects.get(id=prospect_id)
+        except Prospect.DoesNotExist:
+            return Response({"error": "Prospect not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProspectSerializer(prospect)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+def meeting_detail(request, meeting_id):
+    meeting = get_object_or_404(Meeting, pk=meeting_id)
+    data = {
+        "id": meeting.id,
+        "scheduled_at": meeting.scheduled_at,
+        "status": meeting.status,
+        "prospect": {
+            "id": meeting.prospect.id,
+            "company_name": meeting.prospect.company_name,
+            "is_approved": meeting.prospect.is_approved,
+            "geography": meeting.prospect.geography,
+            "status": meeting.prospect.status,
+        },
+        # Add other fields as necessary
+    }
+    return JsonResponse(data)
