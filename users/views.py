@@ -267,7 +267,7 @@ class UserProfileDetail(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):
-        print(self.request.user)
+        #print(self.request.user)
         return self.request.user
     
 from django.shortcuts import get_object_or_404
@@ -419,7 +419,6 @@ def create_meeting(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # print(type(data))
             user_id = data.get('user_id')
             prospect_id = data.get('prospect_id')
             responses = data.get('qualifying_responses', [])
@@ -431,8 +430,8 @@ def create_meeting(request):
             scheduled_at = data.get('scheduled_at')
             other_relevant_details = data.get('other_relevant_details')
             use_case_titles = data.get('use_cases', [])
-            product_id=data.get('product_id')
-            # print(responses)
+            product_id = data.get('product_id')
+
             # Check for required fields
             if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at and product_id):
                 return JsonResponse({"error": "All required fields must be provided."}, status=400)
@@ -444,7 +443,7 @@ def create_meeting(request):
                 return JsonResponse({"error": "User not found."}, status=404)
             try:
                 prod = Product.objects.get(id=product_id)
-            except User.DoesNotExist:
+            except Product.DoesNotExist:
                 return JsonResponse({"error": "Product not found."}, status=404)
             try:
                 prospect = Prospect.objects.get(id=prospect_id)
@@ -466,28 +465,31 @@ def create_meeting(request):
                     status='scheduled',
                     product=prod,
                 )
+
+                # Update prospect status to 'scheduled'
+                prospect.status = 'scheduled'
+                prospect.save()
+
             except Exception as e:
                 print("Error creating Meeting:", str(e))
                 return JsonResponse({"error": "Failed to create Meeting object", "details": str(e)}, status=500)
-            print(responses)
-            for id,answer in responses.items():
+
+            # Process qualifying question responses
+            for id, answer in responses.items():
                 try:
-                    print(id,answer)
                     if not (id and answer):
                         continue  # Skip invalid responses
 
-                    # Create the QualifyingQuestionResponse object
                     qualifying_question_response = QualifyingQuestionResponse.objects.create(
                         qualifying_question_id=id,
                         response=answer
                     )
 
-                    # Add the response to the meeting's qualifying_question_responses
                     meeting.qualifying_question_responses.add(qualifying_question_response)
                 except Exception as e:
                     print(f"Error processing qualifying question response: {str(e)}")
                     return JsonResponse({"error": f"Failed to associate qualifying question response: {str(e)}"}, status=500)
-            
+
             # Associate UseCase objects
             for use_case_title in use_case_titles:
                 try:
@@ -499,6 +501,7 @@ def create_meeting(request):
 
             # Save the meeting with the associated ManyToMany fields
             meeting.save()
+
             # Send email to admin
             admin_email = settings.ADMIN_EMAIL
             send_mail(
