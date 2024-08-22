@@ -55,6 +55,7 @@ class ProductSerializer(serializers.ModelSerializer):
     ideal_customer_profiles = IdealCustomerProfileSerializer(many=True, read_only=True)
     client_logo = serializers.ImageField(source='client.company_logo', read_only=True)  # Existing field for client logo
     client_name = serializers.SerializerMethodField()  # New field for client name
+    client_cal_link = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -62,6 +63,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_client_name(self, obj):
         return obj.client.name if obj.client else None
+    def get_client_cal_link(self, obj):
+        return obj.client.calendly_link if obj.client else None
 
 
 class ProspectSerializer(serializers.ModelSerializer):
@@ -92,3 +95,8 @@ class AssignProspectsSerializer(serializers.Serializer):
         prospects = Prospect.objects.filter(id__in=validated_data['prospect_ids'])
         instance.product_prospects.add(*prospects)
         return instance
+from .models import EmailRequest
+class EmailRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailRequest
+        fields = '__all__'  # Include all fields, or specify fields explicitly

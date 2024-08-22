@@ -36,6 +36,8 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from django.core.mail import send_mail
 from django.middleware.csrf import get_token
+from clients.models import EmailRequest
+from clients.serializers import EmailRequestSerializer
 
 
 class CSRFTokenView(APIView):
@@ -554,3 +556,65 @@ def meeting_detail(request, meeting_id):
         # Add other fields as necessary
     }
     return JsonResponse(data)
+
+
+
+@csrf_exempt
+def send_email_request(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('user_id')
+            prospect_id = data.get('prospect_id')
+            product_id = data.get('product_id')  # Handle the product_id
+            poc_first_name = data.get('poc_first_name')
+            poc_last_name = data.get('poc_last_name')
+            poc_email = data.get('poc_email')
+            poc_designation = data.get('poc_designation')
+            email_subject = data.get('email_subject')
+            email_body = data.get('email_body')
+
+            # Validate required fields
+            if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_designation and email_subject and email_body):
+                return JsonResponse({"error": "All fields are required."}, status=400)
+
+            # Create EmailRequest object
+            email_request = EmailRequest.objects.create(
+                user_id=user_id,
+                prospect_id=prospect_id,
+                product_id=product_id,  # Add product_id to the creation process
+                poc_first_name=poc_first_name,
+                poc_last_name=poc_last_name,
+                poc_email=poc_email,
+                poc_designation=poc_designation,
+                email_subject=email_subject,
+                email_body=email_body,
+            )
+
+            # Send email to admin
+            try:
+                send_mail(
+                    subject=f"Email Request: {email_subject}",
+                    message=f"POC Name: {poc_first_name} {poc_last_name}\n"
+                            f"Designation: {poc_designation}\n"
+                            f"Email: {poc_email}\n\n"
+                            f"Product ID: {product_id}\n\n"  # Include product ID in the email
+                            f"Context:\n{email_body}",
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[settings.ADMIN_EMAIL],
+                )
+                email_request.status = 'pending'
+                email_request.save()
+            except Exception as e:
+                email_request.status = 'failed'
+                email_request.save()
+                return JsonResponse({"error": "Failed to send email.", "details": str(e)}, status=500)
+
+            return JsonResponse({"message": "Email request sent successfully."}, status=201)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"message": "Invalid request method"}, status=405)
