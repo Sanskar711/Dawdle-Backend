@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion,Resource,IdealCustomerProfile,QualifyingQuestionResponse
+from .models import EmailRequest
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
@@ -15,3 +16,9 @@ admin.site.register(QualifyingQuestionResponse)
 admin.site.register(Resource)
 admin.site.register(QualifyingQuestion)
 admin.site.register(IdealCustomerProfile)
+
+@admin.register(EmailRequest)
+class EmailRequestAdmin(admin.ModelAdmin):
+    list_display = ['user', 'prospect', 'poc_email', 'status', 'created_at']
+    search_fields = ['poc_email', 'email_subject']
+    list_filter = ['status', 'created_at']

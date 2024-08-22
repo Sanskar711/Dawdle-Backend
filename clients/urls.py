@@ -18,5 +18,6 @@ urlpatterns = [
     path('products/<int:pk>/add-prospect/', ProductViewSet.as_view({'post': 'add_prospect'}), name='add-product-prospect'),
     path('<int:pk>/company-info/', ClientViewSet.as_view({'get': 'company_info'}), name='client-company-info'),
     path('assigned-products/', AssignedProductsView.as_view(), name='assigned-products'), 
+    
 
 ]

@@ -28,4 +28,5 @@ urlpatterns = [
     path('meetings/', views.UserMeetingsAPI.as_view(), name='user-meetings'),
     path('products/<int:product_id>/add_prospect/<int:prospect_id>/', views.add_prospect_to_product, name='add_prospect_to_product'),
     path('meetings/<int:meeting_id>/', views.meeting_detail, name='meeting_detail'),
+    path('email-request/', views.send_email_request, name='send_email_request'),
 ]
