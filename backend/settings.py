@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'FALSE'
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','http://51.20.193.193/']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','51.20.193.193']
 
 
 # Application definition
@@ -133,11 +133,15 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000"
-]
-CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_WHTIELIST =[
+    "http://localhost:3000",
+]
+CORS_ORIGIN_REGEX_WHITELIST=[
+    "http://localhost:3000",
+]
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -156,6 +160,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR,'build','static'),
     os.path.join(BASE_DIR, 'build', 'static'),
 ]
 
