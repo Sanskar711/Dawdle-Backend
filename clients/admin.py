@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion,Resource,IdealCustomerProfile,QualifyingQuestionResponse
+from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse
 from .models import EmailRequest
 
 class ProductAdmin(admin.ModelAdmin):
@@ -7,10 +7,15 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users',)  # Allow admin to assign users to products
 
+class ProspectAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'is_approved', 'geography', 'status')  # Display these fields in the admin list view
+    list_filter = ('is_approved', 'status', 'geography')  # Add filters for easy searching
+    search_fields = ('company_name', 'geography')  # Allow searching by company name and geography
+
 admin.site.register(Client)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(UseCase)
-admin.site.register(Prospect)
+admin.site.register(Prospect, ProspectAdmin)  # Register with the custom ProspectAdmin
 admin.site.register(Meeting)
 admin.site.register(QualifyingQuestionResponse)
 admin.site.register(Resource)

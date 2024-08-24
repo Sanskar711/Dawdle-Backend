@@ -73,6 +73,7 @@ def send_otp(user):
 
     try:
         logger.info(f"Connecting to SMTP server at {EMAIL_HOST}:{EMAIL_PORT}")
+        print(EMAIL_HOST_USER)
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
             if EMAIL_USE_TLS:
                 logger.info("Starting TLS")
@@ -566,7 +567,7 @@ def send_email_request(request):
             data = json.loads(request.body)
             user_id = data.get('user_id')
             prospect_id = data.get('prospect_id')
-            product_id = data.get('product_id')  # Handle the product_id
+            product_id = data.get('product_id')
             poc_first_name = data.get('poc_first_name')
             poc_last_name = data.get('poc_last_name')
             poc_email = data.get('poc_email')
@@ -582,7 +583,7 @@ def send_email_request(request):
             email_request = EmailRequest.objects.create(
                 user_id=user_id,
                 prospect_id=prospect_id,
-                product_id=product_id,  # Add product_id to the creation process
+                product_id=product_id,
                 poc_first_name=poc_first_name,
                 poc_last_name=poc_last_name,
                 poc_email=poc_email,
@@ -594,12 +595,12 @@ def send_email_request(request):
             # Send email to admin
             try:
                 send_mail(
-                    subject=f"Email Request: {email_subject}",
+                    subject=f"New Email Request: {email_subject}",
                     message=f"POC Name: {poc_first_name} {poc_last_name}\n"
                             f"Designation: {poc_designation}\n"
                             f"Email: {poc_email}\n\n"
-                            f"Product ID: {product_id}\n\n"  # Include product ID in the email
-                            f"Context:\n{email_body}",
+                            f"Product ID: {product_id}\n\n"
+                            f"Message:\n{email_body}",
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[settings.ADMIN_EMAIL],
                 )

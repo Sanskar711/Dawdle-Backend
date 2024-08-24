@@ -1,0 +1,6 @@
+# Ignore virtual environments
+/venv
+
+# Ignore SQLite database
+db.sqlite3
+
