@@ -75,6 +75,8 @@ class ProspectSerializer(serializers.ModelSerializer):
 
 class MeetingSerializer(serializers.ModelSerializer):
     qualifying_question_responses = QualifyingQuestionResponseSerializer(many=True, read_only=True)
+    product=ProductSerializer()
+    prospect=ProspectSerializer()
     use_cases = UseCaseSerializer(many=True, read_only=True)
 
     class Meta:

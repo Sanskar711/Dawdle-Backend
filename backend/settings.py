@@ -52,7 +52,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'users.middleware.JWTAuthenticationMiddleware'
+    # 'users.middleware.JWTAuthenticationMiddleware',
+    'clients.middleware.PathBasedJWTAuthenticationMiddleware'
 ]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',

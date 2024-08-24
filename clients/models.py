@@ -8,9 +8,25 @@ class Client(models.Model):
     company_website = models.URLField(help_text="The official website of the company.", null=True)
     calendly_link = models.URLField(help_text="Link to the company's Calendly schedule.", null=True)
     company_logo = models.ImageField(upload_to='company_logos/', help_text="Upload the company logo.", null=True, blank=True)
-
+    email = models.EmailField(unique=True)  # Set email as unique
+    
     def __str__(self):
         return self.name
+
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+from django.core.validators import RegexValidator
+class OTP(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='otps')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return self.created_at >= timezone.now() - timedelta(minutes=5) and not self.is_used
+
 
 # class Product(models.Model):
 #     name = models.CharField(max_length=255)
@@ -107,6 +123,7 @@ class Prospect(models.Model):
     
     company_name = models.CharField(max_length=255)
     is_approved = models.BooleanField(default=False)
+    is_visible= models.BooleanField(default=True)
     geography = models.CharField(max_length=255, help_text="Geographic location of the prospect",default="Undefined")
     STATUS_CHOICES = [
         ('scheduled', 'Meeting Scheduled'),
@@ -136,7 +153,7 @@ class Meeting(models.Model):
         ('completed', 'Completed'),
         ('closed', 'Closed'),
     ]
-
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True)
     prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
@@ -175,3 +192,8 @@ class EmailRequest(models.Model):
 
     def __str__(self):
         return f"Email to {self.poc_email} by {self.user.email}"
+    
+    
+    
+    
+    

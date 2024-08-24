@@ -326,7 +326,7 @@ class ProductProspectsView(APIView):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        prospects = Prospect.objects.filter(product=product, is_approved=True)
+        prospects = Prospect.objects.filter(product=product, is_approved=True,is_visible=True)
         serializer = ProspectSerializer(prospects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
