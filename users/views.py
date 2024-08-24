@@ -73,6 +73,7 @@ def send_otp(user):
 
     try:
         logger.info(f"Connecting to SMTP server at {EMAIL_HOST}:{EMAIL_PORT}")
+        print(EMAIL_HOST_USER)
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
             if EMAIL_USE_TLS:
                 logger.info("Starting TLS")

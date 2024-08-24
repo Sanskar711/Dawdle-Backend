@@ -1,5 +1,4 @@
 # Ignore virtual environments
-/env
 .venv
 
 # Ignore SQLite database
