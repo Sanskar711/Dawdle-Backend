@@ -5,8 +5,3 @@
 # Ignore SQLite database
 db.sqlite3
 
-# Ignore Python cache directories
-__pycache__/
-
-# Ignore Django migration files
-*/migrations/
