@@ -19,6 +19,7 @@ urlpatterns = [
     path('signin/', views.signin_client, name='signin_client'),
     path('verify_otp_login/<int:client_id>/', views.verify_client_otp_login, name='verify_otp_login'), 
     path('client-info/',views.client_info,name='client-info'),
+    path('client/update/', views.update_client_info, name='update_client_info'),
     path('products/', client_product_list, name='client-product-list'),
     path('products/<int:pk>/', client_product_detail, name='client-product-detail'),
 
