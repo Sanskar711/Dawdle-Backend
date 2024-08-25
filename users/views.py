@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from clients.models import Meeting, QualifyingQuestionResponse
-from backend.settings import EMAIL_HOST_PASSWORD, EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_USE_TLS
+from backend.settings import EMAIL_HOST_PASSWORD, EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_USE_TLS,ADMIN_EMAIL
 import logging
 import smtplib
 from email.mime.text import MIMEText
@@ -31,7 +31,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from clients.models import Product, Prospect, UseCase
-from clients.serializers import ProductSerializer, ProspectSerializer, UseCaseSerializer, QualifyingQuestionSerializer, AssignProspectsSerializer, MeetingSerializer
+from clients.serializers import ProductSerializer, ProspectSerializer, UseCaseSerializer, QualifyingQuestionSerializer,MeetingSerializer
 from rest_framework.decorators import action
 from rest_framework import viewsets
 from django.core.mail import send_mail
@@ -417,11 +417,48 @@ def create_prospect(request):
     
     return JsonResponse({'detail': 'Method not allowed'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+def send_meeting_notification(meeting, prospect, poc_first_name, poc_last_name):
+    subject = f"New Meeting Scheduled with {prospect.company_name}"
+    message = (
+        f"A new meeting has been scheduled.\n\n"
+        f"Prospect: {prospect.company_name}\n"
+        f"Scheduled At: {meeting.scheduled_at}\n"
+        f"POC: {poc_first_name} {poc_last_name}"
+    )
+    from_email = EMAIL_HOST_USER
+    recipient_list = [ADMIN_EMAIL]
+
+    # Set up the MIME
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = ', '.join(recipient_list)
+    msg['Subject'] = subject
+
+    # Attach the message body
+    msg.attach(MIMEText(message, 'plain'))
+
+    # Attempt to send the email
+    try:
+        logger.info(f"Connecting to SMTP server at {EMAIL_HOST}:{EMAIL_PORT}")
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+            if EMAIL_USE_TLS:
+                logger.info("Starting TLS")
+                server.starttls()
+            logger.info("Logging in")
+            server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+            logger.info("Sending email")
+            server.sendmail(from_email, recipient_list, msg.as_string())
+            logger.info(
+                f"Email sent: {subject} - {message} to {recipient_list}")
+    except Exception as e:
+        logger.error(f"Error sending meeting notification: {e}")
+
 @csrf_exempt
 def create_meeting(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            # print(type(data))
             user_id = data.get('user_id')
             prospect_id = data.get('prospect_id')
             responses = data.get('qualifying_responses', [])
@@ -433,10 +470,9 @@ def create_meeting(request):
             scheduled_at = data.get('scheduled_at')
             other_relevant_details = data.get('other_relevant_details')
             use_case_titles = data.get('use_cases', [])
-            product_id = data.get('product_id')
-
+            # print(responses)
             # Check for required fields
-            if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at and product_id):
+            if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at):
                 return JsonResponse({"error": "All required fields must be provided."}, status=400)
 
             # Fetch the related objects
@@ -444,10 +480,7 @@ def create_meeting(request):
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 return JsonResponse({"error": "User not found."}, status=404)
-            try:
-                prod = Product.objects.get(id=product_id)
-            except Product.DoesNotExist:
-                return JsonResponse({"error": "Product not found."}, status=404)
+
             try:
                 prospect = Prospect.objects.get(id=prospect_id)
             except Prospect.DoesNotExist:
@@ -466,33 +499,29 @@ def create_meeting(request):
                     poc_designation=poc_designation,
                     other_relevant_details=other_relevant_details,
                     status='scheduled',
-                    product=prod,
                 )
-
-                # Update prospect status to 'scheduled'
-                prospect.status = 'scheduled'
-                prospect.save()
-
             except Exception as e:
                 print("Error creating Meeting:", str(e))
                 return JsonResponse({"error": "Failed to create Meeting object", "details": str(e)}, status=500)
-
-            # Process qualifying question responses
-            for id, answer in responses.items():
+            # print(responses)
+            for id,answer in responses.items():
                 try:
+                    # print(id,answer)
                     if not (id and answer):
                         continue  # Skip invalid responses
 
+                    # Create the QualifyingQuestionResponse object
                     qualifying_question_response = QualifyingQuestionResponse.objects.create(
                         qualifying_question_id=id,
                         response=answer
                     )
 
+                    # Add the response to the meeting's qualifying_question_responses
                     meeting.qualifying_question_responses.add(qualifying_question_response)
                 except Exception as e:
                     print(f"Error processing qualifying question response: {str(e)}")
                     return JsonResponse({"error": f"Failed to associate qualifying question response: {str(e)}"}, status=500)
-
+            
             # Associate UseCase objects
             for use_case_title in use_case_titles:
                 try:
@@ -501,19 +530,15 @@ def create_meeting(request):
                 except UseCase.DoesNotExist:
                     print("ERROR in usecase adding")
                     continue  # Skip if the use case does not exist
-
+            # print("hi")
             # Save the meeting with the associated ManyToMany fields
             meeting.save()
-
+            # print("meeting saved")
             # Send email to admin
-            admin_email = settings.ADMIN_EMAIL
-            send_mail(
-                subject=f"New Meeting Scheduled with {prospect.company_name}",
-                message=f"A new meeting has been scheduled.\n\nProspect: {prospect.company_name}\nScheduled At: {meeting.scheduled_at}\nPOC: {poc_first_name} {poc_last_name}",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[admin_email],
-            )
+            
+            send_meeting_notification(meeting, prospect, poc_first_name, poc_last_name)
 
+            # print("hi")
             return JsonResponse({"message": "Meeting created successfully", "meeting_id": meeting.id}, status=201)
 
         except json.JSONDecodeError:

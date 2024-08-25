@@ -161,7 +161,7 @@ class Meeting(models.Model):
     
     # New Fields
     qualifying_question_responses = models.ManyToManyField(QualifyingQuestionResponse, related_name='meetings')
-    use_cases = models.ManyToManyField('UseCase', related_name='meetings')
+    use_cases = models.ManyToManyField('UseCase', related_name='meetings',null=True)
     poc_first_name = models.CharField(max_length=255,null=True)
     poc_last_name = models.CharField(max_length=255,null=True)
     poc_email = models.EmailField(null=True)

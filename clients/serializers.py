@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Client, Product, UseCase, Prospect, Meeting,
     Resource, QualifyingQuestion, IdealCustomerProfile,
-    QualifyingQuestionResponse
+    QualifyingQuestionResponse, User
 )
 
 
