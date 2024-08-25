@@ -24,6 +24,8 @@ urlpatterns = [
 
     path('products/<int:product_id>/use-cases/', client_usecase_list, name='client-usecase-list'),
     path('products/<int:product_id>/use-cases/<int:pk>/', client_usecase_detail, name='client-usecase-detail'),
+    path('products/<int:product_id>/use-cases/add/', client_usecase_list, name='client-usecase-add'),
+    path('products/<int:product_id>/use-cases/<int:pk>/update/', client_usecase_detail, name='client-usecase-update'),
 
     path('products/<int:product_id>/prospects/', client_prospect_list, name='client-prospect-list'),
     path('products/<int:product_id>/prospects/<int:pk>/', client_prospect_detail, name='client-prospect-detail'),

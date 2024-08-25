@@ -39,16 +39,6 @@ from django.middleware.csrf import get_token
 from clients.models import EmailRequest
 from clients.serializers import EmailRequestSerializer
 
-class ClientCSRFTokenView(APIView):
-    """
-    This view provides a CSRF token for the frontend to use with the Client model.
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        csrf_token = get_token(request)
-        return Response({'csrfToken': csrf_token})
-
 logger = logging.getLogger(__name__)
 @csrf_exempt
 def send_client_otp(client):
