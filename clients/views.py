@@ -31,7 +31,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from clients.models import Product, Prospect, UseCase,Client
-from clients.serializers import ProductSerializer, ProspectSerializer, UseCaseSerializer, QualifyingQuestionSerializer, AssignProspectsSerializer, MeetingSerializer
+from clients.serializers import ProductSerializer, ProspectSerializer,Prospect2Serializer, UseCaseSerializer, QualifyingQuestionSerializer, AssignProspectsSerializer, MeetingSerializer
 from rest_framework.decorators import action
 from rest_framework import viewsets
 from django.core.mail import send_mail
@@ -324,7 +324,7 @@ def client_usecase_detail(request, product_id, pk):
 
     elif request.method == 'DELETE':
         use_case.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
@@ -346,7 +346,7 @@ def client_prospect_list(request, product_id):
         data = JSONParser().parse(request)
         serializer = ProspectSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(product=product)
+            serializer.save(product=[product])
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
@@ -373,10 +373,13 @@ def client_prospect_detail(request, product_id, pk):
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
+    
+    
+    
 
     elif request.method == 'DELETE':
         prospect.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
@@ -532,7 +535,7 @@ def client_ideal_customer_profile_detail(request, product_id, pk):
 
     elif request.method == 'DELETE':
         ideal_customer_profile.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 

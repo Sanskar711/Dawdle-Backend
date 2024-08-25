@@ -71,7 +71,12 @@ class ProspectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prospect
         fields = '__all__'
+class Prospect2Serializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), many=True)  # Accept a list of product IDs
 
+    class Meta:
+        model = Prospect
+        fields = '__all__'
 
 class MeetingSerializer(serializers.ModelSerializer):
     qualifying_question_responses = QualifyingQuestionResponseSerializer(many=True, read_only=True)
