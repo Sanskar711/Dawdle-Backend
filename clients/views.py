@@ -166,6 +166,8 @@ class ClientDashboardView(APIView):
             'completed_meetings': completed_meetings,
             'successful_meetings': successful_meetings,
         })
+        
+
 from django.views.decorators.http import require_GET
 from .serializers import ClientSerializer 
 @require_GET
@@ -177,6 +179,26 @@ def client_info(request):
     # is_verified = client.is_verified  # Assuming you have this field in your Client model
     serializer = ClientSerializer(client)
     return JsonResponse(serializer.data, safe=False)
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_http_methods
+@method_decorator(csrf_exempt, name='dispatch')
+@require_http_methods(["PUT"])
+def update_client_info(request):
+    client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    try:
+        data = JSONParser().parse(request)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    serializer = ClientSerializer(client, data=data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return JsonResponse(serializer.data, safe=False)
+    else:
+        return JsonResponse(serializer.errors, status=400)
 
 
 
@@ -203,14 +225,12 @@ from .serializers import (
     QualifyingQuestionSerializer, IdealCustomerProfileSerializer, MeetingSerializer
 )
 from rest_framework.parsers import JSONParser
-
+from django.core.exceptions import ObjectDoesNotExist
 @csrf_exempt
 def client_product_list(request):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    # Assuming middleware sets request.client
-    # print(client)
 
     if request.method == 'GET':
         products = Product.objects.filter(client=client)
@@ -225,7 +245,17 @@ def client_product_list(request):
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
-    return HttpResponseNotAllowed(['GET', 'POST'])
+    elif request.method == 'DELETE':
+        data = JSONParser().parse(request)
+        product_id = data.get('id')
+        try:
+            product = Product.objects.get(id=product_id, client=client)
+            product.delete()
+            return JsonResponse({'message': 'Product deleted successfully'}, status=200)
+        except ObjectDoesNotExist:
+            return JsonResponse({'error': 'Product not found'}, status=404)
+
+    return HttpResponseNotAllowed(['GET', 'POST', 'DELETE'])
 
 
 @csrf_exempt
@@ -234,7 +264,7 @@ def client_product_detail(request, pk):
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     product = get_object_or_404(Product, pk=pk, client=client)
-    if not product.filter(client=client).exists():
+    if not product.client==client:
         return JsonResponse({'error': 'Forbidden'}, status=403)
 
     if request.method == 'GET':
@@ -384,7 +414,7 @@ def client_resource_list(request, product_id):
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
-
+from django.http import JsonResponse, HttpResponse, HttpResponseNotAllowed
 @csrf_exempt
 def client_resource_detail(request, product_id, pk):
     client = request.client
@@ -408,7 +438,7 @@ def client_resource_detail(request, product_id, pk):
 
     elif request.method == 'DELETE':
         resource.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 

@@ -48,12 +48,12 @@ class Product(models.Model):
     key_problems_solved = models.TextField(help_text="Key problems solved by the product in bullet points",null=True)
 
     # Relationships
-    use_cases = models.ManyToManyField('UseCase', related_name='products')
-    assigned_users = models.ManyToManyField(User, related_name='assigned_clients')
-    product_prospects = models.ManyToManyField('Prospect', related_name='product')
-    qualifying_questions = models.ManyToManyField('QualifyingQuestion', related_name='products')
+    use_cases = models.ManyToManyField('UseCase', related_name='products',blank=True)
+    assigned_users = models.ManyToManyField(User, related_name='assigned_clients',blank=True)
+    product_prospects = models.ManyToManyField('Prospect', related_name='product',blank=True)
+    qualifying_questions = models.ManyToManyField('QualifyingQuestion', related_name='products',blank=True)
     resources = models.ManyToManyField('Resource', related_name='products')
-    ideal_customer_profiles = models.ManyToManyField('IdealCustomerProfile', related_name='products')
+    ideal_customer_profiles = models.ManyToManyField('IdealCustomerProfile', related_name='products',blank=True)
 
     def __str__(self):
         return self.name
