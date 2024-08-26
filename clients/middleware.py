@@ -42,8 +42,8 @@ class PathBasedJWTAuthenticationMiddleware:
             try:
                 # Decode the JWT token for users
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-                user_id = payload.get('user_id')
                 print("payload",payload)
+                user_id = payload.get('user_id')
                 print("user",user_id)
                 if user_id:
                     try:
@@ -73,8 +73,8 @@ class PathBasedJWTAuthenticationMiddleware:
             try:
                 # Decode the JWT token for clients
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-                client_id = payload.get('client_id')
                 print("payload",payload)
+                client_id = payload.get('client_id')
                 print("client",client_id)
                 if client_id:
                     try:
