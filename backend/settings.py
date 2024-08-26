@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
 SECRET_KEY = 'django-insecure-tl&&wtl(hdub+nf^5^@xb98o8f1_akazhkad$7(p5y)w+q)rkx'
-DEBUG = True # Set to False in production
+DEBUG = False # Set to False in production
 ALLOWED_HOSTS = ['portal.dawdle.live', '13.233.126.193', 'localhost', '127.0.0.1']
 
 # Installed apps
