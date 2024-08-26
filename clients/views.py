@@ -1,45 +1,29 @@
 # views.py
-from django.contrib.auth import login, logout
-from .models import User, OTP
-from django.contrib.auth.decorators import login_required
+
+from .models import  OTP
 from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.http import JsonResponse
-from rest_framework.permissions import IsAuthenticated
-from clients.models import Meeting, QualifyingQuestionResponse
+from django.http import JsonResponse, HttpResponseServerError, HttpResponse, HttpResponseNotAllowed
+from clients.models import Meeting, Product, Prospect, UseCase, Client, Resource, QualifyingQuestion, IdealCustomerProfile
+from clients.serializers import (
+    ProductSerializer, ProspectSerializer, UseCaseSerializer, QualifyingQuestionSerializer, 
+    MeetingSerializer, ResourceSerializer, IdealCustomerProfileSerializer, ClientSerializer,
+)
 from backend.settings import EMAIL_HOST_PASSWORD, EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_USE_TLS
 import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
-from django.http import HttpResponseServerError
-from rest_framework import generics
-
-
-from rest_framework.permissions import IsAuthenticated
 import jwt
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from django.conf import settings
-from clients.models import Product
-from clients.serializers import ProductSerializer
-from datetime import timedelta
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import status
-from clients.models import Product, Prospect, UseCase,Client
-from clients.serializers import ProductSerializer, ProspectSerializer,Prospect2Serializer, UseCaseSerializer, QualifyingQuestionSerializer, AssignProspectsSerializer, MeetingSerializer
-from rest_framework.decorators import action
-from rest_framework import viewsets
-from django.core.mail import send_mail
-from django.middleware.csrf import get_token
-from clients.models import EmailRequest
-from clients.serializers import EmailRequestSerializer
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.parsers import JSONParser
 
 logger = logging.getLogger(__name__)
+
 @csrf_exempt
 def send_client_otp(client):
     code = get_random_string(6, allowed_chars='0123456789')
@@ -72,11 +56,6 @@ def send_client_otp(client):
     except Exception as e:
         logger.error(f"Error sending OTP: {e}")
 
-
-
-
-
-
 @csrf_exempt
 def signin_client(request):
     try:
@@ -105,7 +84,6 @@ def signin_client(request):
         logger.error(f"Error during client login process: {e}")
         return HttpResponseServerError('An error occurred during login. Please try again later.')
 
-
 def generate_client_jwt_token(client):
     now = datetime.now(timezone.utc)
     payload = {
@@ -115,6 +93,7 @@ def generate_client_jwt_token(client):
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
     return token
+
 @csrf_exempt
 def verify_client_otp_login(request, client_id):
     try:
@@ -133,7 +112,6 @@ def verify_client_otp_login(request, client_id):
         if otp and otp.is_valid():
             otp.is_used = True
             otp.delete()
-            # login(request, client)
             request.session['client_id'] = client.id
             token = generate_client_jwt_token(client)
             return JsonResponse({"message": "Client verified successfully", "token": token}, status=200)
@@ -141,34 +119,10 @@ def verify_client_otp_login(request, client_id):
 
     return JsonResponse({"message": "Invalid request method"}, status=405)
 
-
-# class ClientDashboardView(APIView):
-#     # permission_classes = [IsAuthenticated]
-
-#     # def get(self, request):
-#     #     client = request.client  # Assuming you're using a middleware to set request.client
-#     #     scheduled_meetings = Meeting.objects.filter(client=client).count()  # Assuming Meeting model has a foreign key to Client
-#     #     completed_meetings = Meeting.objects.filter(client=client, completed=True).count()
-#     #     successful_meetings = Meeting.objects.filter(client=client, is_successful=True).count()
-
-#     #     return Response({
-#     #         'scheduled_meetings': scheduled_meetings,
-#     #         'completed_meetings': completed_meetings,
-#     #         'successful_meetings': successful_meetings,
-#     #     })
-        
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .serializers import ClientSerializer
-# from django.utils.six import ensure_text
-from rest_framework.parsers import JSONParser
-
 @csrf_exempt
 def client_info(request):
     if request.method == 'GET':
         client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
-        print("client after getting it from request in views:", client)
-        
         if client is None:
             return JsonResponse({'error': 'Unauthorized'}, status=401)
 
@@ -186,7 +140,7 @@ def update_client_info(request):
             return JsonResponse({'error': 'Unauthorized'}, status=401)
 
         try:
-            data = JSONParser().parse(request)
+            data = json.load(request.data)
         except ValueError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
@@ -199,32 +153,6 @@ def update_client_info(request):
     
     return JsonResponse({'error': 'Method Not Allowed'}, status=405)
 
-
-
-
-
-
-
-
-
-
-
-
-from django.shortcuts import get_object_or_404
-
-
-from django.http import JsonResponse, HttpResponseNotAllowed
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from .models import (
-    Product, UseCase, Prospect, Resource, QualifyingQuestion, IdealCustomerProfile, Meeting
-)
-from .serializers import (
-    ProductSerializer, UseCaseSerializer, ProspectSerializer, ResourceSerializer,
-    QualifyingQuestionSerializer, IdealCustomerProfileSerializer, MeetingSerializer
-)
-from rest_framework.parsers import JSONParser
-from django.core.exceptions import ObjectDoesNotExist
 @csrf_exempt
 def client_product_list(request):
     client = request.client
@@ -237,7 +165,7 @@ def client_product_list(request):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             serializer.save(client=client)
@@ -245,7 +173,7 @@ def client_product_list(request):
         return JsonResponse(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
-        data = JSONParser().parse(request)
+        data =  json.load(request.data)
         product_id = data.get('id')
         try:
             product = Product.objects.get(id=product_id, client=client)
@@ -256,14 +184,13 @@ def client_product_list(request):
 
     return HttpResponseNotAllowed(['GET', 'POST', 'DELETE'])
 
-
 @csrf_exempt
 def client_product_detail(request, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     product = get_object_or_404(Product, pk=pk, client=client)
-    if not product.client==client:
+    if not product.client == client:
         return JsonResponse({'error': 'Forbidden'}, status=403)
 
     if request.method == 'GET':
@@ -271,7 +198,7 @@ def client_product_detail(request, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ProductSerializer(product, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -280,10 +207,9 @@ def client_product_detail(request, pk):
 
     elif request.method == 'DELETE':
         product.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
-
 
 @csrf_exempt
 def client_usecase_list(request, product_id):
@@ -291,7 +217,6 @@ def client_usecase_list(request, product_id):
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
-
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
@@ -300,7 +225,7 @@ def client_usecase_list(request, product_id):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = UseCaseSerializer(data=data)
         if serializer.is_valid():
             serializer.save(products=[product])
@@ -309,13 +234,12 @@ def client_usecase_list(request, product_id):
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
-
 @csrf_exempt
 def client_usecase_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
     use_case = get_object_or_404(UseCase, pk=pk, products=product)
 
@@ -324,7 +248,7 @@ def client_usecase_detail(request, product_id, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = UseCaseSerializer(use_case, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -337,37 +261,35 @@ def client_usecase_detail(request, product_id, pk):
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-
 @csrf_exempt
 def client_prospect_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        prospects = Prospect.objects.filter(product=product).distinct()
+        prospects = Prospect.objects.filter(product=product)
         serializer = ProspectSerializer(prospects, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ProspectSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(product=[product])
+            serializer.save(product=product)
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
-
 
 @csrf_exempt
 def client_prospect_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
     prospect = get_object_or_404(Prospect, pk=pk, product=product)
 
@@ -376,15 +298,12 @@ def client_prospect_detail(request, product_id, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ProspectSerializer(prospect, data=data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
-    
-    
-    
 
     elif request.method == 'DELETE':
         prospect.delete()
@@ -392,46 +311,44 @@ def client_prospect_detail(request, product_id, pk):
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-
 @csrf_exempt
 def client_resource_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        resources = Resource.objects.filter(products=product).distinct()
+        resources = Resource.objects.filter(product=product)
         serializer = ResourceSerializer(resources, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ResourceSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(products=[product])
+            serializer.save(product=product)
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
-from django.http import JsonResponse, HttpResponse, HttpResponseNotAllowed
 @csrf_exempt
 def client_resource_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
-    resource = get_object_or_404(Resource, pk=pk, products=product)
+    resource = get_object_or_404(Resource, pk=pk, product=product)
 
     if request.method == 'GET':
         serializer = ResourceSerializer(resource)
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = ResourceSerializer(resource, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -444,46 +361,44 @@ def client_resource_detail(request, product_id, pk):
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-
 @csrf_exempt
-def client_qualifying_question_list(request, product_id):
+def client_qualifying_questions_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        qualifying_questions = QualifyingQuestion.objects.filter(products=product).distinct()
+        qualifying_questions = QualifyingQuestion.objects.filter(product=product)
         serializer = QualifyingQuestionSerializer(qualifying_questions, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = QualifyingQuestionSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(products=[product])
+            serializer.save(product=product)
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
-
 @csrf_exempt
-def client_qualifying_question_detail(request, product_id, pk):
+def client_qualifying_questions_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
-    qualifying_question = get_object_or_404(QualifyingQuestion, pk=pk, products=product)
+    qualifying_question = get_object_or_404(QualifyingQuestion, pk=pk, product=product)
 
     if request.method == 'GET':
         serializer = QualifyingQuestionSerializer(qualifying_question)
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = QualifyingQuestionSerializer(qualifying_question, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -492,86 +407,82 @@ def client_qualifying_question_detail(request, product_id, pk):
 
     elif request.method == 'DELETE':
         qualifying_question.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
-
 
 @csrf_exempt
 def client_ideal_customer_profile_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        ideal_customer_profiles = IdealCustomerProfile.objects.filter(products=product).distinct()
-        serializer = IdealCustomerProfileSerializer(ideal_customer_profiles, many=True)
+        profiles = IdealCustomerProfile.objects.filter(product=product)
+        serializer = IdealCustomerProfileSerializer(profiles, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = IdealCustomerProfileSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(products=[product])
+            serializer.save(product=product)
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
-
 
 @csrf_exempt
 def client_ideal_customer_profile_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
-    ideal_customer_profile = get_object_or_404(IdealCustomerProfile, pk=pk, products=product)
+    profile = get_object_or_404(IdealCustomerProfile, pk=pk, product=product)
 
     if request.method == 'GET':
-        serializer = IdealCustomerProfileSerializer(ideal_customer_profile)
+        serializer = IdealCustomerProfileSerializer(profile)
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
-        serializer = IdealCustomerProfileSerializer(ideal_customer_profile, data=data)
+        data = json.load(request.data)
+        serializer = IdealCustomerProfileSerializer(profile, data=data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
-        ideal_customer_profile.delete()
+        profile.delete()
         return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
-
 
 @csrf_exempt
 def client_meeting_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-
+    
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        meetings = Meeting.objects.filter(prospect__product=product).distinct()
+        meetings = Meeting.objects.filter(prospect__product=product)
         serializer = MeetingSerializer(meetings, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = JSONParser().parse(request)
+        data = json.load(request.data)
         serializer = MeetingSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(prospect__product=product)
+            serializer.save(prospect=Prospect.objects.get(product=product))
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
-
 
 @csrf_exempt
 def client_meeting_detail(request, product_id, pk):
@@ -587,7 +498,11 @@ def client_meeting_detail(request, product_id, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = JSONParser().parse(request)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        
         serializer = MeetingSerializer(meeting, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -596,88 +511,31 @@ def client_meeting_detail(request, product_id, pk):
 
     elif request.method == 'DELETE':
         meeting.delete()
-        return JsonResponse(status=204)
+        return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-
-
 @csrf_exempt
-def entire_client_meeting_list(request):
-    client = request.client  # Assuming `request.client` is set by your middleware or view logic
+def client_meeting_schedule(request, product_id, pk):
+    client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    if request.method == 'GET':
-        # Fetch all products associated with the given client
-        products = Product.objects.filter(client=client)
+    product = get_object_or_404(Product, id=product_id, client=client)
+    meeting = get_object_or_404(Meeting, pk=pk, prospect__product=product)
 
-        # Fetch all meetings associated with these products
-        meetings = Meeting.objects.filter(product__in=products).distinct()
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-        # Serialize the meetings data
-        serializer = MeetingSerializer(meetings, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        new_date = data.get('scheduled_date')
+        if not new_date:
+            return JsonResponse({"error": "Scheduled date is required"}, status=400)
 
-    return HttpResponseNotAllowed(['GET'])
+        meeting.scheduled_date = new_date
+        meeting.save()
+        return JsonResponse({"message": "Meeting date updated successfully"}, status=200)
 
-@csrf_exempt
-def meeting_detail(request, meeting_id):
-    client = request.client  # Assuming `request.client` is set by your middleware or view logic
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    meeting = get_object_or_404(Meeting, pk=meeting_id)
-
-    # Ensure the meeting is associated with the client
-    if meeting.product.client != client:
-        return JsonResponse({'error': 'Forbidden'}, status=403)
-
-    serializer = MeetingSerializer(meeting)
-    return JsonResponse(serializer.data, safe=False)
-
-@csrf_exempt
-def prospect_detail(request, prospect_id):
-    client = request.client  # Assuming `request.client` is set by your middleware or view logic
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    prospect = get_object_or_404(Prospect, pk=prospect_id)
-    print(prospect)
-
-    # Ensure the prospect is associated with the client
-    if not prospect.product.filter(client=client).exists():
-        return JsonResponse({'error': 'Forbidden'}, status=403)
-
-    serializer = ProspectSerializer(prospect)
-    return JsonResponse(serializer.data, safe=False)
-
-@csrf_exempt
-def usecase_detail(request, usecase_id):
-    client = request.client  # Assuming `request.client` is set by your middleware or view logic
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    use_case = get_object_or_404(UseCase, pk=usecase_id)
-
-    # Ensure the use case is associated with a product that belongs to the client
-    if not use_case.products.filter(client=client).exists():
-        return JsonResponse({'error': 'Forbidden'}, status=403)
-
-    serializer = UseCaseSerializer(use_case)
-    return JsonResponse(serializer.data, safe=False)
-
-@csrf_exempt
-def qualifying_question_detail(request, question_id):
-    client = request.client  # Assuming `request.client` is set by your middleware or view logic
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    question = get_object_or_404(QualifyingQuestion, pk=question_id)
-
-    # Ensure the qualifying question is associated with a product that belongs to the client
-    if not question.products.filter(client=client).exists():
-        return JsonResponse({'error': 'Forbidden'}, status=403)
-
-    serializer = QualifyingQuestionSerializer(question)
-    return JsonResponse(serializer.data, safe=False)
+    return HttpResponseNotAllowed(['PUT'])
