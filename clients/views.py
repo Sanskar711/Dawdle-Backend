@@ -157,40 +157,47 @@ def verify_client_otp_login(request, client_id):
 #     #         'successful_meetings': successful_meetings,
 #     #     })
         
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .serializers import ClientSerializer
+from django.utils.six import ensure_text
+from rest_framework.parsers import JSONParser
 
-from django.views.decorators.http import require_GET
-from .serializers import ClientSerializer 
-@require_GET
+@csrf_exempt
 def client_info(request):
-    client = request.client  # Assuming your middleware sets request.client
-    print("client after getting it from request in views",client)
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    if request.method == 'GET':
+        client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+        print("client after getting it from request in views:", client)
+        
+        if client is None:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    # is_verified = client.is_verified  # Assuming you have this field in your Client model
-    serializer = ClientSerializer(client)
-    return JsonResponse(serializer.data, safe=False)
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_http_methods
-@method_decorator(csrf_exempt, name='dispatch')
-@require_http_methods(["PUT"])
-def update_client_info(request):
-    client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-    try:
-        data = JSONParser().parse(request)
-    except ValueError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-
-    serializer = ClientSerializer(client, data=data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
+        serializer = ClientSerializer(client)
         return JsonResponse(serializer.data, safe=False)
-    else:
-        return JsonResponse(serializer.errors, status=400)
+    
+    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+@csrf_exempt
+def update_client_info(request):
+    if request.method == 'PUT':
+        client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+        
+        if client is None:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+        try:
+            data = JSONParser().parse(request)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        serializer = ClientSerializer(client, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, safe=False)
+        else:
+            return JsonResponse(serializer.errors, status=400)
+    
+    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
 
 
 
