@@ -36,9 +36,12 @@ class PathBasedJWTAuthenticationMiddleware:
             return self.get_response(request)
 
     def _authenticate_user(self, request):
+        print("in the authentcation function")
         auth_header = request.headers.get('Authorization')
+        print("auth_header",auth_header)
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
+            print("toke", token)
             try:
                 # Decode the JWT token for users
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
@@ -66,10 +69,12 @@ class PathBasedJWTAuthenticationMiddleware:
     
 
     def _authenticate_client(self, request):
+        print("in the authentcation function")
         auth_header = request.headers.get('Authorization')
-        
+        print("auth_header",auth_header)
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
+            print("toke", token)
             try:
                 # Decode the JWT token for clients
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
