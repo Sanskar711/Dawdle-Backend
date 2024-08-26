@@ -142,20 +142,20 @@ def verify_client_otp_login(request, client_id):
     return JsonResponse({"message": "Invalid request method"}, status=405)
 
 
-class ClientDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+# class ClientDashboardView(APIView):
+#     # permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        client = request.client  # Assuming you're using a middleware to set request.client
-        scheduled_meetings = Meeting.objects.filter(client=client).count()  # Assuming Meeting model has a foreign key to Client
-        completed_meetings = Meeting.objects.filter(client=client, completed=True).count()
-        successful_meetings = Meeting.objects.filter(client=client, is_successful=True).count()
+#     # def get(self, request):
+#     #     client = request.client  # Assuming you're using a middleware to set request.client
+#     #     scheduled_meetings = Meeting.objects.filter(client=client).count()  # Assuming Meeting model has a foreign key to Client
+#     #     completed_meetings = Meeting.objects.filter(client=client, completed=True).count()
+#     #     successful_meetings = Meeting.objects.filter(client=client, is_successful=True).count()
 
-        return Response({
-            'scheduled_meetings': scheduled_meetings,
-            'completed_meetings': completed_meetings,
-            'successful_meetings': successful_meetings,
-        })
+#     #     return Response({
+#     #         'scheduled_meetings': scheduled_meetings,
+#     #         'completed_meetings': completed_meetings,
+#     #         'successful_meetings': successful_meetings,
+#     #     })
         
 
 from django.views.decorators.http import require_GET
@@ -612,7 +612,7 @@ def entire_client_meeting_list(request):
 
     return HttpResponseNotAllowed(['GET'])
 
-
+@csrf_exempt
 def meeting_detail(request, meeting_id):
     client = request.client  # Assuming `request.client` is set by your middleware or view logic
     if client is None:
@@ -627,6 +627,7 @@ def meeting_detail(request, meeting_id):
     serializer = MeetingSerializer(meeting)
     return JsonResponse(serializer.data, safe=False)
 
+@csrf_exempt
 def prospect_detail(request, prospect_id):
     client = request.client  # Assuming `request.client` is set by your middleware or view logic
     if client is None:
@@ -642,6 +643,7 @@ def prospect_detail(request, prospect_id):
     serializer = ProspectSerializer(prospect)
     return JsonResponse(serializer.data, safe=False)
 
+@csrf_exempt
 def usecase_detail(request, usecase_id):
     client = request.client  # Assuming `request.client` is set by your middleware or view logic
     if client is None:
@@ -656,6 +658,7 @@ def usecase_detail(request, usecase_id):
     serializer = UseCaseSerializer(use_case)
     return JsonResponse(serializer.data, safe=False)
 
+@csrf_exempt
 def qualifying_question_detail(request, question_id):
     client = request.client  # Assuming `request.client` is set by your middleware or view logic
     if client is None:

@@ -37,22 +37,9 @@ from rest_framework import viewsets
 from django.core.mail import send_mail
 from django.middleware.csrf import get_token
 from clients.models import EmailRequest
-from clients.serializers import EmailRequestSerializer
 
-
-class CSRFTokenView(APIView):
-    """
-    This view provides a CSRF token for the frontend to use.
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        csrf_token = get_token(request)
-        return Response({'csrfToken': csrf_token})
-
-
+from django.shortcuts import get_object_or_404
 logger = logging.getLogger(__name__)
-
 
 @csrf_exempt
 def send_otp(user):
@@ -167,22 +154,24 @@ def generate_jwt_token(user):
     return token
 
 
-class UserProductsView(APIView):
 
-    def get(self, request):
+@csrf_exempt
+def user_products_view(request):
+    if request.method == 'GET':
         user = request.user
         products = Product.objects.filter(assigned_users=user)
         serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
-    @action(detail=True, methods=['get'])
-    def get_assigned_questions(self, request, pk=None):
-        user_id = request.user.id
-        assigned_questions = Product.objects.filter(assigned_users=user_id)
-        serializer = QualifyingQuestionSerializer(
-            assigned_questions, many=True)
-        return Response(serializer.data)
-
+@csrf_exempt
+def product_questions_view(request, product_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
+        questions = product.qualifying_questions.all()
+        serializer = QualifyingQuestionSerializer(questions, many=True)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 @csrf_exempt
 def verify_otp_login(request, user_id):
@@ -210,150 +199,79 @@ def verify_otp_login(request, user_id):
     return JsonResponse({"message": "Invalid request method"}, status=405)
 
 
-@login_required
-def home(request):
-    user = request.user
-    if user.isverified:
-        status = "Verification Pending"
-        products = []
-    else:
-        status = "Verified"
-        products = user.assigned_products.all()
-    # return render(request, 'users/home.html', {'status': status, 'products': products})
 
 
-class DashboardView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        scheduled_meetings = Meeting.objects.filter(user=user).count()
-        completed_meetings = Meeting.objects.filter(
-            user=user, completed=True).count()
-        successful_meetings = Meeting.objects.filter(
-            user=user, is_successful=True).count()
-        return Response({
-            'scheduled_meetings': scheduled_meetings,
-            'completed_meetings': completed_meetings,
-            'successful_meetings': successful_meetings,
-        })
-
-# @login_required
-# def session_view(request):
-#     user_id = request.session.get('user_id')
-#     return JsonResponse({"authenticated": True, "user_id": user_id})
-
-
-# def debug_session_view(request):
-#     session_data = request.session.items()
-#     session_info = {key: value for key, value in session_data}
-#     return JsonResponse({"session": session_info})
-
-# def logout_view(request):
-#     logout(request)
-#     response = JsonResponse({"message": "User logged out successfully"})
-#     response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-#     response['Access-Control-Allow-Credentials'] = 'true'
-#     return response
-class UserLogoutView(APIView):
-    def get(self, request):
-        user = request.user
-        if user is None or user.is_anonymous:
-            return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-        logout(request)  # Assuming you have this field in your User model
-        return JsonResponse({"User logged Out"})
-
-
-class UserProfileDetail(generics.RetrieveUpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-    def get_object(self):
-        #print(self.request.user)
-        return self.request.user
-    
-from django.shortcuts import get_object_or_404
 @csrf_exempt
-def update_user_profile(request, user_id):
-    if request.method == 'PUT':
-        # Fetch user profile using user_id
-        user_profile = get_object_or_404(User, id=user_id)
-        
-        # Assume the request body contains JSON data for profile update
-        data = json.loads(request.body.decode('utf-8'))
-        
-        # Update user profile fields
-        user_profile.first_name = data.get('first_name', user_profile.first_name)
-        user_profile.last_name = data.get('last_name', user_profile.last_name)
-        user_profile.email = data.get('email', user_profile.email)
-        user_profile.phone_number = data.get('phone_number', user_profile.phone_number)
-        user_profile.linkedin_id = data.get('linkedin_id', user_profile.linkedin_id)
-        user_profile.designation = data.get('designation', user_profile.designation)
-        user_profile.company_name = data.get('company_name', user_profile.company_name)
-        # user_profile.user_type = data.get('user_type', user_profile.user_type)
-        
-        # Save the updated profile
-        user_profile.save()
-        
-        return JsonResponse({'message': 'Profile updated successfully!'}, status=200)
+def user_profile_detail(request, user_id):
+    user = get_object_or_404(User, id=user_id)
     
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
-class UserVerificationStatusView(APIView):
-    def get(self, request):
+    if request.method == 'GET':
+        # Handle GET request to retrieve the user's profile
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == 'PUT':
+        # Handle PUT request to update the user's profile
+        try:
+            data = json.loads(request.body)
+            serializer = UserSerializer(user, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=status.HTTP_400_BAD_REQUEST)
+
+    return JsonResponse({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@csrf_exempt
+def user_verification_status_view(request):
+    if request.method == 'GET':
         user = request.user
-        if user is None or user.is_anonymous:
+        if user.is_anonymous:
             return JsonResponse({'error': 'Unauthorized'}, status=401)
-
-        is_verified = user.isverified  # Assuming you have this field in your User model
+        is_verified = user.isverified
         return JsonResponse({"is_verified": is_verified})
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-class ProductInfoView(APIView):
-    def get(self, request, product_id):
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
+@csrf_exempt
+def product_info_view(request, product_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
         serializer = ProductSerializer(product)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-class ProductProspectsView(APIView):
-    def get(self, request, product_id):
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        prospects = Prospect.objects.filter(product=product, is_approved=True,is_visible=True)
+@csrf_exempt
+def product_prospects_view(request, product_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
+        prospects = Prospect.objects.filter(product=product, is_approved=True, is_visible=True)
         serializer = ProspectSerializer(prospects, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
-
-class ProductUseCasesView(APIView):
-    def get(self, request, product_id):
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        use_cases = product.use_cases
+@csrf_exempt
+def product_use_cases_view(request, product_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
+        use_cases = product.use_cases.all()
         serializer = UseCaseSerializer(use_cases, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-class ProductQuestions(APIView):
-    def get(self, request, product_id):
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        questions = product.qualifying_questions
+@csrf_exempt
+def product_questions_view(request, product_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
+        questions = product.qualifying_questions.all()
         serializer = QualifyingQuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 class UseCaseDetailView(APIView):
@@ -371,20 +289,18 @@ class UseCaseDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class UseCaseViewSet(viewsets.ModelViewSet):
-    queryset = UseCase.objects.all()
-    serializer_class = UseCaseSerializer
-
-    @action(detail=True, methods=['get'])
-    def details(self, request, pk=None):
-        """
-        Get detailed information about a specific use case.
-        """
-        use_case = self.get_object(request.id)
+@csrf_exempt
+def use_case_detail_view(request, product_id, usecase_id):
+    if request.method == 'GET':
+        product = get_object_or_404(Product, id=product_id)
+        use_case = product.use_cases.filter(id=usecase_id).first()
+        if not use_case:
+            return JsonResponse({"error": "Use case not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = UseCaseSerializer(use_case)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
     
-
+@csrf_exempt
 def add_prospect_to_product(request, product_id, prospect_id):
     # Fetch the product and prospect using the provided IDs
     product = get_object_or_404(Product, id=product_id)
@@ -548,24 +464,25 @@ def create_meeting(request):
 
     return JsonResponse({"message": "Invalid request method"}, status=405)
 
-class UserMeetingsAPI(APIView):
-
-    def get(self,request):
-        # Return meetings for the logged-in user
+@csrf_exempt
+def user_meetings_api(request):
+    if request.method == 'GET':
         user = request.user
-        meetings=Meeting.objects.filter(user=user.id)
+        meetings = Meeting.objects.filter(user=user.id)
         serializer = MeetingSerializer(meetings, many=True)
-        return Response(serializer.data)
-class ProspectInfoView(APIView):
-    def get(self, request, prospect_id):
-        try:
-            prospect = Prospect.objects.get(id=prospect_id)
-        except Prospect.DoesNotExist:
-            return Response({"error": "Prospect not found"}, status=status.HTTP_404_NOT_FOUND)
+        return JsonResponse(serializer.data, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
+
+@csrf_exempt
+def prospect_info_view(request, prospect_id):
+    if request.method == 'GET':
+        prospect = get_object_or_404(Prospect, id=prospect_id)
         serializer = ProspectSerializer(prospect)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
+        return JsonResponse(serializer.data, status=status.HTTP_200_OK, safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+@csrf_exempt   
 def meeting_detail(request, meeting_id):
     meeting = get_object_or_404(Meeting, pk=meeting_id)
     data = {
