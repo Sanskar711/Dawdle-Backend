@@ -7,8 +7,10 @@ urlpatterns = [
     path('verify_otp_login/<int:user_id>/', views.verify_otp_login, name='verify_otp_login'),
     # path('home/', views.home, name='home'),
     # path('public/csrf-token/', views.csrf_token_view, name='csrf-token'),
-    # path('<int:user_id>/update-profile/', views.update_user_profile, name='update-profile'),
+   
     # path('logout/', views.user_logout_view, name='logout_view'),
+    path('<int:user_id>/update-profile/', views.user_profile_detail, name='update-profile'),
+    path('<int:user_id>/profile/', views.user_profile_detail, name='fetch-profile'),
     path('verification-status/', views.user_verification_status_view, name='verification-status'),
     path('user-products/', views.user_products_view, name='user-products'),
     path('product/<int:product_id>/info/', views.product_info_view, name='product-info'),
