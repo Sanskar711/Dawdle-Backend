@@ -170,6 +170,7 @@ def client_info(request):
     # is_verified = client.is_verified  # Assuming you have this field in your Client model
     serializer = ClientSerializer(client)
     return JsonResponse(serializer.data, safe=False)
+
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_http_methods
 @method_decorator(csrf_exempt, name='dispatch')

@@ -70,28 +70,28 @@ class PathBasedJWTAuthenticationMiddleware:
     
 
     def _authenticate_client(self, request):
-        print("in the authentcation function")
+        print("In the authentication function")
         auth_header = request.headers.get('Authorization')
-        print("headers",request.headers)
-        # print("auth_header",auth_header)
+        print("Headers:", request.headers)
+        print("Auth header:", auth_header)
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
-            print("toke", token)
+            print("Token:", token)
             try:
-                # Decode the JWT token for clients
+            # Decode the JWT token for clients
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-                print("payload",payload)
+                print("Payload:", payload)
                 client_id = payload.get('client_id')
-                print("client",client_id)
+                print("Client ID:", client_id)
                 if client_id:
                     try:
-                        print("found client")
+                        print("Looking for client with ID:", client_id)
                         client = Client.objects.get(id=client_id)
+                        print("Found client:", client)
                         request.client = client
-                        
                     except Client.DoesNotExist:
                         logger.warning(f"Client with ID {client_id} does not exist.")
-                        return JsonResponse({'error': 'Client does not exist'}, status=404)
+                    return JsonResponse({'error': 'Client does not exist'}, status=404)
                 else:
                     logger.warning("Invalid token payload: missing client_id.")
                     return JsonResponse({'error': 'Invalid token payload'}, status=401)
@@ -99,6 +99,8 @@ class PathBasedJWTAuthenticationMiddleware:
                 logger.error(f"JWT error: {str(e)}")
                 return JsonResponse({'error': 'Token is invalid or expired'}, status=401)
         else:
+            print("No valid Authorization header found.")
             request.client = None
 
         return self.get_response(request)
+
