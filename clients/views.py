@@ -160,7 +160,7 @@ def verify_client_otp_login(request, client_id):
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import ClientSerializer
-from django.utils.six import ensure_text
+# from django.utils.six import ensure_text
 from rest_framework.parsers import JSONParser
 
 @csrf_exempt
