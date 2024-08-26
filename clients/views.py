@@ -539,3 +539,133 @@ def client_meeting_schedule(request, product_id, pk):
         return JsonResponse({"message": "Meeting date updated successfully"}, status=200)
 
     return HttpResponseNotAllowed(['PUT'])
+
+@csrf_exempt
+def client_qualifying_question_detail(request, product_id, pk):
+    client = request.client
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    product = get_object_or_404(Product, id=product_id, client=client)
+    qualifying_question = get_object_or_404(QualifyingQuestion, pk=pk, products=product)
+
+    if request.method == 'GET':
+        serializer = QualifyingQuestionSerializer(qualifying_question)
+        return JsonResponse(serializer.data)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = QualifyingQuestionSerializer(qualifying_question, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        qualifying_question.delete()
+        return JsonResponse(status=204)
+
+    return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
+
+@csrf_exempt
+def client_qualifying_question_list(request, product_id):
+    client = request.client
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    product = get_object_or_404(Product, id=product_id, client=client)
+
+    if request.method == 'GET':
+        qualifying_questions = QualifyingQuestion.objects.filter(products=product).distinct()
+        serializer = QualifyingQuestionSerializer(qualifying_questions, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = QualifyingQuestionSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(products=[product])
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+
+    return HttpResponseNotAllowed(['GET', 'POST'])
+
+@csrf_exempt
+def entire_client_meeting_list(request):
+    client = request.client  # Assuming request.client is set by your middleware or view logic
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    if request.method == 'GET':
+        # Fetch all products associated with the given client
+        products = Product.objects.filter(client=client)
+
+        # Fetch all meetings associated with these products
+        meetings = Meeting.objects.filter(product__in=products).distinct()
+
+        # Serialize the meetings data
+        serializer = MeetingSerializer(meetings, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+    return HttpResponseNotAllowed(['GET'])
+
+@csrf_exempt
+def meeting_detail(request, meeting_id):
+    client = request.client  # Assuming request.client is set by your middleware or view logic
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    meeting = get_object_or_404(Meeting, pk=meeting_id)
+
+    # Ensure the meeting is associated with the client
+    if meeting.product.client != client:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    serializer = MeetingSerializer(meeting)
+    return JsonResponse(serializer.data, safe=False)
+
+@csrf_exempt
+def prospect_detail(request, prospect_id):
+    client = request.client  # Assuming request.client is set by your middleware or view logic
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    prospect = get_object_or_404(Prospect, pk=prospect_id)
+    print(prospect)
+
+    # Ensure the prospect is associated with the client
+    if not prospect.product.filter(client=client).exists():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    serializer = ProspectSerializer(prospect)
+    return JsonResponse(serializer.data, safe=False)
+
+@csrf_exempt
+def usecase_detail(request, usecase_id):
+    client = request.client  # Assuming request.client is set by your middleware or view logic
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    use_case = get_object_or_404(UseCase, pk=usecase_id)
+
+    # Ensure the use case is associated with a product that belongs to the client
+    if not use_case.products.filter(client=client).exists():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    serializer = UseCaseSerializer(use_case)
+    return JsonResponse(serializer.data, safe=False)
+
+@csrf_exempt
+def qualifying_question_detail(request, question_id):
+    client = request.client  # Assuming request.client is set by your middleware or view logic
+    if client is None:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    question = get_object_or_404(QualifyingQuestion, pk=question_id)
+
+    # Ensure the qualifying question is associated with a product that belongs to the client
+    if not question.products.filter(client=client).exists():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    serializer = QualifyingQuestionSerializer(question)
+    return JsonResponse(serializer.data, safe=False)
