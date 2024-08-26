@@ -386,6 +386,7 @@ def create_meeting(request):
             scheduled_at = data.get('scheduled_at')
             other_relevant_details = data.get('other_relevant_details')
             use_case_titles = data.get('use_cases', [])
+            product_id = data.get('product_id')
             # print(responses)
             # Check for required fields
             if not (user_id and prospect_id and poc_first_name and poc_last_name and poc_email and poc_phone_number and scheduled_at):
@@ -401,12 +402,17 @@ def create_meeting(request):
                 prospect = Prospect.objects.get(id=prospect_id)
             except Prospect.DoesNotExist:
                 return JsonResponse({"error": "Prospect not found."}, status=404)
+            try: 
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return JsonResponse({"error": "Product not found."}, status=404)
 
             # Create the Meeting object
             try:
                 meeting = Meeting.objects.create(
                     user=user,
                     prospect=prospect,
+                    product = product,
                     scheduled_at=scheduled_at,
                     poc_first_name=poc_first_name,
                     poc_last_name=poc_last_name,
