@@ -17,17 +17,20 @@ class PathBasedJWTAuthenticationMiddleware:
         # Determine which authentication logic to apply based on the request path
         if request.path.startswith('/admin/'):
             # Bypass JWT authentication for admin paths
+            print("admin middleware")
             return self.get_response(request)
         elif request.path.startswith('/users/'):
             # Apply User JWT authentication
+            print("user middleware")
             return self._authenticate_user(request)
         elif request.path.startswith('/clients/'):
             # Apply Client JWT authentication
-            print("hello")
+            print("client middleware")
             return self._authenticate_client(request)
         
         else:
             # Default action if path does not match known patterns
+            print("not matching route")
             request.user = None
             request.client = None
             return self.get_response(request)
@@ -40,8 +43,11 @@ class PathBasedJWTAuthenticationMiddleware:
                 # Decode the JWT token for users
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
                 user_id = payload.get('user_id')
+                print("payload",payload)
+                print("user",user_id)
                 if user_id:
                     try:
+                        print("found user")
                         user = User.objects.get(id=user_id)
                         request.user = user
                     except User.DoesNotExist:
@@ -68,12 +74,14 @@ class PathBasedJWTAuthenticationMiddleware:
                 # Decode the JWT token for clients
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
                 client_id = payload.get('client_id')
-                print("hello",client_id)
+                print("payload",payload)
+                print("client",client_id)
                 if client_id:
                     try:
+                        print("found client")
                         client = Client.objects.get(id=client_id)
                         request.client = client
-                        print(client)
+                        
                     except Client.DoesNotExist:
                         logger.warning(f"Client with ID {client_id} does not exist.")
                         return JsonResponse({'error': 'Client does not exist'}, status=404)
