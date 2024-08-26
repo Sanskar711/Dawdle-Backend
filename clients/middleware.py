@@ -38,7 +38,8 @@ class PathBasedJWTAuthenticationMiddleware:
     def _authenticate_user(self, request):
         print("in the authentcation function")
         auth_header = request.headers.get('Authorization')
-        print("auth_header",auth_header)
+        print("headers",request.headers)
+        # print("auth_header",auth_header)
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             print("toke", token)
@@ -71,7 +72,8 @@ class PathBasedJWTAuthenticationMiddleware:
     def _authenticate_client(self, request):
         print("in the authentcation function")
         auth_header = request.headers.get('Authorization')
-        print("auth_header",auth_header)
+        print("headers",request.headers)
+        # print("auth_header",auth_header)
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
             print("toke", token)
