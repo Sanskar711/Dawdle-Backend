@@ -490,23 +490,12 @@ def prospect_info_view(request, prospect_id):
 
 @csrf_exempt   
 def meeting_detail(request, meeting_id):
-    meeting = get_object_or_404(Meeting, pk=meeting_id)
-    data = {
-        "id": meeting.id,
-        "scheduled_at": meeting.scheduled_at,
-        "status": meeting.status,
-        "prospect": {
-            "id": meeting.prospect.id,
-            "company_name": meeting.prospect.company_name,
-            "is_approved": meeting.prospect.is_approved,
-            "geography": meeting.prospect.geography,
-            "status": meeting.prospect.status,
-        },
-        # Add other fields as necessary
-    }
-    return JsonResponse(data)
-
-
+    if request.method == 'GET':
+        meeting = get_object_or_404(Meeting, pk=meeting_id)
+        serializer = MeetingSerializer(meeting)
+        return JsonResponse(serializer.data, safe=False)
+    else:
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
 @csrf_exempt
 def send_email_request(request):
