@@ -162,7 +162,7 @@ from django.views.decorators.http import require_GET
 from .serializers import ClientSerializer 
 @require_GET
 def client_info(request):
-    client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+    client = request.client  # Assuming your middleware sets request.client
     print("client after getting it from request in views",client)
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
