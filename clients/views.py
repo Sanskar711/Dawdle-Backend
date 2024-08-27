@@ -241,7 +241,7 @@ def client_usecase_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
     use_case = get_object_or_404(UseCase, pk=pk, products=product)
 
@@ -250,7 +250,7 @@ def client_usecase_detail(request, product_id, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = UseCaseSerializer(use_case, data=data)
         if serializer.is_valid():
             serializer.save()
