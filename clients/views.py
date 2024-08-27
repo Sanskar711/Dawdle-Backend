@@ -416,23 +416,24 @@ def client_ideal_customer_profile_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        profiles = IdealCustomerProfile.objects.filter(product=product)
-        serializer = IdealCustomerProfileSerializer(profiles, many=True)
+        ideal_customer_profiles = IdealCustomerProfile.objects.filter(products=product).distinct()
+        serializer = IdealCustomerProfileSerializer(ideal_customer_profiles, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = IdealCustomerProfileSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(product=product)
+            serializer.save(products=[product])
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
+
 
 @csrf_exempt
 def client_ideal_customer_profile_detail(request, product_id, pk):
