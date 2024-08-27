@@ -316,19 +316,19 @@ def client_resource_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        resources = Resource.objects.filter(product=product)
+        resources = Resource.objects.filter(products=product).distinct()
         serializer = ResourceSerializer(resources, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = ResourceSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(product=product)
+            serializer.save(products=[product])
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
