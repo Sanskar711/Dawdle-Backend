@@ -267,23 +267,24 @@ def client_prospect_list(request, product_id):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
-        prospects = Prospect.objects.filter(product=product)
+        prospects = Prospect.objects.filter(product=product).distinct()
         serializer = ProspectSerializer(prospects, many=True)
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = ProspectSerializer(data=data)
         if serializer.is_valid():
-            serializer.save(product=product)
+            serializer.save(product=[product])
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)
 
     return HttpResponseNotAllowed(['GET', 'POST'])
+
 
 @csrf_exempt
 def client_prospect_detail(request, product_id, pk):
