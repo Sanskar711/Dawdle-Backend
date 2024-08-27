@@ -165,7 +165,7 @@ def client_product_list(request):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = json.load(request.body)
         serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             serializer.save(client=client)
@@ -173,7 +173,7 @@ def client_product_list(request):
         return JsonResponse(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
-        data =  json.load(request.data)
+        data =  json.load(request.body)
         product_id = data.get('id')
         try:
             product = Product.objects.get(id=product_id, client=client)
@@ -198,7 +198,7 @@ def client_product_detail(request, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = json.load(request.data)
+        data = json.load(request.body)
         serializer = ProductSerializer(product, data=data)
         if serializer.is_valid():
             serializer.save()
