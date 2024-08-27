@@ -122,7 +122,7 @@ def verify_client_otp_login(request, client_id):
 @csrf_exempt
 def client_info(request):
     if request.method == 'GET':
-        client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+        client = request.client  # Assuming your middleware sets request.client
         if client is None:
             return JsonResponse({'error': 'Unauthorized'}, status=401)
 
@@ -134,7 +134,7 @@ def client_info(request):
 @csrf_exempt
 def update_client_info(request):
     if request.method == 'PUT':
-        client = getattr(request, 'client', None)  # Assuming your middleware sets request.client
+        client = request.client  # Assuming your middleware sets request.client
         
         if client is None:
             return JsonResponse({'error': 'Unauthorized'}, status=401)
