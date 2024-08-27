@@ -165,7 +165,7 @@ def client_product_list(request):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             serializer.save(client=client)
@@ -173,7 +173,7 @@ def client_product_list(request):
         return JsonResponse(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
-        data =  json.load(request.data)
+        data = JSONParser().parse(request)
         product_id = data.get('id')
         try:
             product = Product.objects.get(id=product_id, client=client)
@@ -183,6 +183,7 @@ def client_product_list(request):
             return JsonResponse({'error': 'Product not found'}, status=404)
 
     return HttpResponseNotAllowed(['GET', 'POST', 'DELETE'])
+
 
 @csrf_exempt
 def client_product_detail(request, pk):
