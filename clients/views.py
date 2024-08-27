@@ -440,24 +440,24 @@ def client_ideal_customer_profile_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
-    profile = get_object_or_404(IdealCustomerProfile, pk=pk, product=product)
+    ideal_customer_profile = get_object_or_404(IdealCustomerProfile, pk=pk, products=product)
 
     if request.method == 'GET':
-        serializer = IdealCustomerProfileSerializer(profile)
+        serializer = IdealCustomerProfileSerializer(ideal_customer_profile)
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = json.load(request.data)
-        serializer = IdealCustomerProfileSerializer(profile, data=data)
+        data = JSONParser().parse(request)
+        serializer = IdealCustomerProfileSerializer(ideal_customer_profile, data=data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
 
     elif request.method == 'DELETE':
-        profile.delete()
+        ideal_customer_profile.delete()
         return HttpResponse(status=204)
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
