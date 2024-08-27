@@ -292,7 +292,7 @@ def client_prospect_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
     prospect = get_object_or_404(Prospect, pk=pk, product=product)
 
@@ -301,13 +301,13 @@ def client_prospect_detail(request, product_id, pk):
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = ProspectSerializer(prospect, data=data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
         return JsonResponse(serializer.errors, status=400)
-
+    
     elif request.method == 'DELETE':
         prospect.delete()
         return HttpResponse(status=204)
@@ -342,16 +342,16 @@ def client_resource_detail(request, product_id, pk):
     client = request.client
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     product = get_object_or_404(Product, id=product_id, client=client)
-    resource = get_object_or_404(Resource, pk=pk, product=product)
+    resource = get_object_or_404(Resource, pk=pk, products=product)
 
     if request.method == 'GET':
         serializer = ResourceSerializer(resource)
         return JsonResponse(serializer.data)
 
     elif request.method == 'PUT':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = ResourceSerializer(resource, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -364,55 +364,6 @@ def client_resource_detail(request, product_id, pk):
 
     return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
-@csrf_exempt
-def client_qualifying_questions_list(request, product_id):
-    client = request.client
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
-    product = get_object_or_404(Product, id=product_id, client=client)
-
-    if request.method == 'GET':
-        qualifying_questions = QualifyingQuestion.objects.filter(product=product)
-        serializer = QualifyingQuestionSerializer(qualifying_questions, many=True)
-        return JsonResponse(serializer.data, safe=False)
-
-    elif request.method == 'POST':
-        data = json.load(request.data)
-        serializer = QualifyingQuestionSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save(product=product)
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)
-
-    return HttpResponseNotAllowed(['GET', 'POST'])
-
-@csrf_exempt
-def client_qualifying_questions_detail(request, product_id, pk):
-    client = request.client
-    if client is None:
-        return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
-    product = get_object_or_404(Product, id=product_id, client=client)
-    qualifying_question = get_object_or_404(QualifyingQuestion, pk=pk, product=product)
-
-    if request.method == 'GET':
-        serializer = QualifyingQuestionSerializer(qualifying_question)
-        return JsonResponse(serializer.data)
-
-    elif request.method == 'PUT':
-        data = json.load(request.data)
-        serializer = QualifyingQuestionSerializer(qualifying_question, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data)
-        return JsonResponse(serializer.errors, status=400)
-
-    elif request.method == 'DELETE':
-        qualifying_question.delete()
-        return HttpResponse(status=204)
-
-    return HttpResponseNotAllowed(['GET', 'PUT', 'DELETE'])
 
 @csrf_exempt
 def client_ideal_customer_profile_list(request, product_id):
