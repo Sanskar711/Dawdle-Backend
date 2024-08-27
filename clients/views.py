@@ -218,6 +218,7 @@ def client_usecase_list(request, product_id):
     if client is None:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
     
+
     product = get_object_or_404(Product, id=product_id, client=client)
 
     if request.method == 'GET':
@@ -226,7 +227,7 @@ def client_usecase_list(request, product_id):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'POST':
-        data = json.load(request.data)
+        data = JSONParser().parse(request)
         serializer = UseCaseSerializer(data=data)
         if serializer.is_valid():
             serializer.save(products=[product])
