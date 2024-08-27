@@ -112,7 +112,7 @@ def verify_client_otp_login(request, client_id):
         if otp and otp.is_valid():
             otp.is_used = True
             otp.delete()
-            request.session['client_id'] = client.id
+            # request.session['client_id'] = client.id
             token = generate_client_jwt_token(client)
             return JsonResponse({"message": "Client verified successfully", "token": token}, status=200)
         return JsonResponse({"error": "Invalid or expired OTP"}, status=400)
