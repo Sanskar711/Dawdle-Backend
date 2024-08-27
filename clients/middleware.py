@@ -91,7 +91,7 @@ class PathBasedJWTAuthenticationMiddleware:
                         request.client = client
                     except Client.DoesNotExist:
                         logger.warning(f"Client with ID {client_id} does not exist.")
-                    return JsonResponse({'error': 'Client does not exist'}, status=404)
+                        return JsonResponse({'error': 'Client does not exist'}, status=404)
                 else:
                     logger.warning("Invalid token payload: missing client_id.")
                     return JsonResponse({'error': 'Invalid token payload'}, status=401)
