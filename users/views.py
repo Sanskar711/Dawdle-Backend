@@ -456,6 +456,7 @@ def create_meeting(request):
             # Save the meeting with the associated ManyToMany fields
             meeting.save()
             prospect.status='scheduled'
+            prospect.save()
             # print("meeting saved")
             # Send email to admin
             
