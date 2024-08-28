@@ -43,17 +43,18 @@ class Product(models.Model):
     client = models.ForeignKey(Client, related_name='products', on_delete=models.CASCADE)
     
     # New Fields
-    description = models.TextField(help_text="Brief product description",null=True)
-    key_features = models.TextField(help_text="Key product features in bullet points",null=True)
-    key_problems_solved = models.TextField(help_text="Key problems solved by the product in bullet points",null=True)
+    description = models.TextField(help_text="Brief product description", null=True)
+    key_features = models.TextField(help_text="Key product features in bullet points", null=True)
+    key_problems_solved = models.TextField(help_text="Key problems solved by the product in bullet points", null=True)
+    video_link = models.URLField(help_text="Link to the product video", null=True, blank=True)  # New video link field
 
     # Relationships
-    use_cases = models.ManyToManyField('UseCase', related_name='products',blank=True)
-    assigned_users = models.ManyToManyField(User, related_name='assigned_clients',blank=True)
-    product_prospects = models.ManyToManyField('Prospect', related_name='product',blank=True)
-    qualifying_questions = models.ManyToManyField('QualifyingQuestion', related_name='products',blank=True)
+    use_cases = models.ManyToManyField('UseCase', related_name='products', blank=True)
+    assigned_users = models.ManyToManyField(User, related_name='assigned_clients', blank=True)
+    product_prospects = models.ManyToManyField('Prospect', related_name='product', blank=True)
+    qualifying_questions = models.ManyToManyField('QualifyingQuestion', related_name='products', blank=True)
     resources = models.ManyToManyField('Resource', related_name='products')
-    ideal_customer_profiles = models.ManyToManyField('IdealCustomerProfile', related_name='products',blank=True)
+    ideal_customer_profiles = models.ManyToManyField('IdealCustomerProfile', related_name='products', blank=True)
 
     def __str__(self):
         return self.name
