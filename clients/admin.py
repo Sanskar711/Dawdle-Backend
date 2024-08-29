@@ -1,25 +1,79 @@
 from django.contrib import admin
-from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse
-from .models import EmailRequest
+from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse, EmailRequest
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
-    filter_horizontal = ('assigned_users',)  # Allow admin to assign users to products
+    filter_horizontal = ('assigned_users',)
 
 class ProspectAdmin(admin.ModelAdmin):
-    list_display = ('company_name', 'is_approved', 'geography', 'status')  # Display these fields in the admin list view
-    list_filter = ('is_approved', 'status', 'geography')  # Add filters for easy searching
-    search_fields = ('company_name', 'geography')  # Allow searching by company name and geography
+    list_display = ('company_name', 'is_approved', 'geography', 'status')
+    list_filter = ('is_approved', 'status', 'geography')
+    search_fields = ('company_name', 'geography')
+
+class UseCaseAdmin(admin.ModelAdmin):
+    list_display = ('title', 'description', 'get_linked_products')
+
+    def get_linked_products(self, obj):
+        return ", ".join([product.name for product in obj.products.all()])
+    
+    get_linked_products.short_description = 'Linked Products'
+
+class ResourceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'get_linked_clients', 'get_linked_products')
+
+    def get_linked_clients(self, obj):
+        clients = set(product.client.name for product in obj.products.all())
+        return ", ".join(clients)
+    
+    def get_linked_products(self, obj):
+        return ", ".join([product.name for product in obj.products.all()])
+    
+    get_linked_clients.short_description = 'Linked Clients'
+    get_linked_products.short_description = 'Linked Products'
+
+# Custom QualifyingQuestionResponseAdmin to show linked meeting, product, and client
+class QualifyingQuestionResponseAdmin(admin.ModelAdmin):
+    list_display = ('response', 'get_linked_meeting', 'get_linked_product', 'get_linked_client')
+
+    def get_linked_meeting(self, obj):
+        return ", ".join([meeting.prospect.company_name for meeting in obj.meetings.all()])
+    
+    def get_linked_product(self, obj):
+        products = set(meeting.product.name for meeting in obj.meetings.all())
+        return ", ".join(products)
+    
+    def get_linked_client(self, obj):
+        clients = set(meeting.product.client.name for meeting in obj.meetings.all())
+        return ", ".join(clients)
+
+    get_linked_meeting.short_description = 'Linked Meeting'
+    get_linked_product.short_description = 'Linked Product'
+    get_linked_client.short_description = 'Linked Client'
+
+# Custom QualifyingQuestionAdmin to show linked product and client
+class QualifyingQuestionAdmin(admin.ModelAdmin):
+    list_display = ('question', 'get_linked_products', 'get_linked_clients')
+
+    def get_linked_products(self, obj):
+        products = obj.products.all()
+        return ", ".join([product.name for product in products])
+    
+    def get_linked_clients(self, obj):
+        clients = set(product.client.name for product in obj.products.all())
+        return ", ".join(clients)
+
+    get_linked_products.short_description = 'Linked Products'
+    get_linked_clients.short_description = 'Linked Clients'
 
 admin.site.register(Client)
 admin.site.register(Product, ProductAdmin)
-admin.site.register(UseCase)
-admin.site.register(Prospect, ProspectAdmin)  # Register with the custom ProspectAdmin
+admin.site.register(UseCase, UseCaseAdmin)
+admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(Meeting)
-admin.site.register(QualifyingQuestionResponse)
-admin.site.register(Resource)
-admin.site.register(QualifyingQuestion)
+admin.site.register(QualifyingQuestionResponse, QualifyingQuestionResponseAdmin)
+admin.site.register(Resource, ResourceAdmin)
+admin.site.register(QualifyingQuestion, QualifyingQuestionAdmin)
 admin.site.register(IdealCustomerProfile)
 
 @admin.register(EmailRequest)
