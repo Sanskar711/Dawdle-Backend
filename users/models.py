@@ -15,9 +15,9 @@ class User(AbstractUser):
     )])
     user_type = models.CharField(max_length=12, choices=[('individual', 'Individual'), ('organization', 'Organization')])
     linkedin_id = models.CharField(max_length=500, null=True, blank=True)
-    designation=models.CharField(max_length=50,null=True)
+    designation=models.CharField(max_length=50,null=True, blank=True)
     isverified = models.BooleanField(default=False)
-    company_name = models.CharField(max_length=50,null=True)
+    company_name = models.CharField(max_length=50,null=True, blank=True)
     USERNAME_FIELD = 'email'  # Use email to log in
     REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number', 'user_type']  # Required fields for creating a user
 
