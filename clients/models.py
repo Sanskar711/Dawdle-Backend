@@ -123,7 +123,7 @@ class UseCase(models.Model):
 class Prospect(models.Model):
     
     company_name = models.CharField(max_length=255)
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
     is_visible= models.BooleanField(default=True)
     geography = models.CharField(max_length=255, help_text="Geographic location of the prospect",default="Undefined")
     STATUS_CHOICES = [
