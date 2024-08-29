@@ -140,7 +140,7 @@ def update_client_info(request):
             return JsonResponse({'error': 'Unauthorized'}, status=401)
 
         try:
-            data = json.load(request.body)
+            data = json.loads(request.body.decode('utf-8'))  # Corrected: use json.loads and decode the bytes
         except ValueError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
