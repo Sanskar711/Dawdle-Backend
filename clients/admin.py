@@ -82,13 +82,25 @@ class EmailRequestAdmin(admin.ModelAdmin):
     search_fields = ['poc_email', 'email_subject']
     list_filter = ['status', 'created_at']
 
+class QualifyingQuestionResponseInline(admin.TabularInline):
+    model = QualifyingQuestionResponse
+    extra = 0  # This will prevent the addition of extra empty rows
+
+class UseCaseInline(admin.TabularInline):
+    model = Meeting.use_cases.through
+    extra = 0
+    verbose_name = "Use Case"
+    verbose_name_plural = "Use Cases"
+
 class MeetingAdmin(admin.ModelAdmin):
     list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
-    
+
+    inlines = [QualifyingQuestionResponseInline, UseCaseInline]
+
     def get_client_name(self, obj):
         return obj.product.client.name if obj.product else None
     get_client_name.short_description = 'Client Name'
-    
+
     def get_prospect_geography(self, obj):
         return obj.prospect.geography if obj.prospect else None
     get_prospect_geography.short_description = 'Prospect Geography'
@@ -103,13 +115,5 @@ class MeetingAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.prefetch_related('qualifying_question_responses', 'use_cases')
-
-    def get_inline_instances(self, request, obj=None):
-        inline_instances = super().get_inline_instances(request, obj)
-        if obj:
-            for inline in inline_instances:
-                if isinstance(inline, QualifyingQuestionResponseInline):
-                    inline.instance = obj
-        return inline_instances
 
 admin.site.register(Meeting, MeetingAdmin)
