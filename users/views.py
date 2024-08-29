@@ -204,7 +204,7 @@ def verify_otp_login(request, user_id):
 
 @csrf_exempt
 def user_profile_detail(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    user = User.objects.get(id=user_id).distinct()
     
     if request.method == 'GET':
         # Handle GET request to retrieve the user's profile

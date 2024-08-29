@@ -6,6 +6,7 @@ from django.core.validators import RegexValidator
 
 class User(AbstractUser):
     username = None  # Remove the username field
+    password = None
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)  # Set email as unique
