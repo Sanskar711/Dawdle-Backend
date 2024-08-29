@@ -14,7 +14,7 @@ class User(AbstractUser):
         regex=r"^\d{10}$", message="Phone number must be 10 digits only."
     )])
     user_type = models.CharField(max_length=12, choices=[('individual', 'Individual'), ('organization', 'Organization')])
-    linkedin_id = models.CharField(max_length=50, null=True, blank=True)
+    linkedin_id = models.CharField(max_length=500, null=True, blank=True)
     designation=models.CharField(max_length=50,null=True)
     isverified = models.BooleanField(default=False)
     company_name = models.CharField(max_length=50,null=True)
