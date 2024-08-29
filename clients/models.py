@@ -153,6 +153,7 @@ class Meeting(models.Model):
         ('scheduled', 'Scheduled'),
         ('completed', 'Completed'),
         ('closed', 'Closed'),
+        ('pending', 'Pending For Approval'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)

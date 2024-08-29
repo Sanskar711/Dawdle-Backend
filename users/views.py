@@ -428,7 +428,7 @@ def create_meeting(request):
                     poc_phone_number=poc_phone_number,
                     poc_designation=poc_designation,
                     other_relevant_details=other_relevant_details,
-                    status='scheduled',
+                    status='pending',
                 )
             except Exception as e:
                 print("Error creating Meeting:", str(e))
