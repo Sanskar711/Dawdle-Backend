@@ -4,7 +4,7 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','first_name', 'last_name', 'email', 'phone_number', 'linkedin_id', 'designation', 'company_name', 'user_type']
+        fields = '__all__'
         read_only_fields = ['email']  # If you don't want email to be editable, for example
     # def update(self, instance, validated_data):
     #     # Handle updates, ensuring you only update fields that should be editable

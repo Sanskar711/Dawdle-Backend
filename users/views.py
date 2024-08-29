@@ -215,10 +215,14 @@ def user_profile_detail(request, user_id):
         # Handle PUT request to update the user's profile
         try:
             data = json.loads(request.body)
+            print("data", data)
             serializer = UserSerializer(user, data=data, partial=True)
+            print("serializer valid", serializer.is_valid())
+
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=status.HTTP_400_BAD_REQUEST)
