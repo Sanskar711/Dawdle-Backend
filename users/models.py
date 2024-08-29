@@ -13,7 +13,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=10, unique=True, blank=True, null=True, validators=[RegexValidator(
         regex=r"^\d{10}$", message="Phone number must be 10 digits only."
     )])
-    user_type = models.CharField(max_length=12, choices=[('Individual', 'Individual'), ('Organization', 'Organization')])
+    user_type = models.CharField(max_length=12, choices=[('individual', 'Individual'), ('organization', 'Organization')])
     linkedin_id = models.CharField(max_length=50, null=True, blank=True)
     designation=models.CharField(max_length=50,null=True)
     isverified = models.BooleanField(default=False)
