@@ -131,6 +131,7 @@ class Prospect(models.Model):
         ('completed', 'Meeting Completed'),
         ('closed', 'Deal Closed'),
         ('open', 'Open For Meeting'),
+        ('pending', 'Pending For Approval'),
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='open', help_text="Current status of the prospect")
 
