@@ -204,7 +204,10 @@ def verify_otp_login(request, user_id):
 
 @csrf_exempt
 def user_profile_detail(request, user_id):
-    user = User.objects.get(id=user_id).distinct()
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist"}, status=404)
     
     if request.method == 'GET':
         # Handle GET request to retrieve the user's profile
@@ -212,7 +215,6 @@ def user_profile_detail(request, user_id):
         return JsonResponse(serializer.data, status=status.HTTP_200_OK)
     
     elif request.method == 'PUT':
-        # Handle PUT request to update the user's profile
         try:
             data = json.loads(request.body)
             print("data", data)
@@ -222,8 +224,10 @@ def user_profile_detail(request, user_id):
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+            else:
+                print("validation errors:", serializer.errors)  # Log validation errors
+                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=status.HTTP_400_BAD_REQUEST)
 
