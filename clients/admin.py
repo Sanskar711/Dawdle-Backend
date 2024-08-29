@@ -62,7 +62,7 @@ class QualifyingQuestionAdmin(admin.ModelAdmin):
     def get_linked_clients(self, obj):
         clients = set(product.client.name for product in obj.products.all())
         return ", ".join(clients)
-
+    search_fields = ('qualifying_question__question', 'response')
     get_linked_products.short_description = 'Linked Products'
     get_linked_clients.short_description = 'Linked Clients'
 
@@ -81,9 +81,6 @@ class EmailRequestAdmin(admin.ModelAdmin):
     search_fields = ['poc_email', 'email_subject']
     list_filter = ['status', 'created_at']
 
-class QualifyingQuestionResponseInline(admin.TabularInline):
-    model = QualifyingQuestionResponse
-    extra = 0  # This will prevent the addition of extra empty rows
 
 class UseCaseInline(admin.TabularInline):
     model = Meeting.use_cases.through
@@ -93,7 +90,7 @@ class UseCaseInline(admin.TabularInline):
 
 class MeetingAdmin(admin.ModelAdmin):
     list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
-    inlines = [QualifyingQuestionResponseInline, UseCaseInline]
+    inlines = [UseCaseInline]  # Only include inlines for related models that are directly accessible
 
     def get_client_name(self, obj):
         return obj.product.client.name if obj.product else None
