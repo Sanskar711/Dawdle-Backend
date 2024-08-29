@@ -93,7 +93,6 @@ class UseCaseInline(admin.TabularInline):
 
 class MeetingAdmin(admin.ModelAdmin):
     list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
-
     inlines = [QualifyingQuestionResponseInline, UseCaseInline]
 
     def get_client_name(self, obj):
@@ -106,9 +105,6 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        if obj:  # If editing an existing meeting
-            form.base_fields['qualifying_question_responses'].queryset = obj.qualifying_question_responses.all()
-            form.base_fields['use_cases'].queryset = obj.use_cases.all()
         return form
 
     def get_queryset(self, request):
