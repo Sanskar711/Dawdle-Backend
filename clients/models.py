@@ -131,7 +131,6 @@ class Prospect(models.Model):
         ('completed', 'Meeting Completed'),
         ('closed', 'Deal Closed'),
         ('open', 'Open For Meeting'),
-        ('pending', 'Pending For Approval'),
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='open', help_text="Current status of the prospect")
 
@@ -154,6 +153,7 @@ class Meeting(models.Model):
         ('scheduled', 'Scheduled'),
         ('completed', 'Completed'),
         ('closed', 'Closed'),
+        ('pending', 'Pending For Approval'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
