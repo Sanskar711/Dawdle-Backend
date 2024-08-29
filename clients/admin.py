@@ -81,3 +81,35 @@ class EmailRequestAdmin(admin.ModelAdmin):
     list_display = ['user', 'prospect', 'poc_email', 'status', 'created_at']
     search_fields = ['poc_email', 'email_subject']
     list_filter = ['status', 'created_at']
+
+class MeetingAdmin(admin.ModelAdmin):
+    list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
+    
+    def get_client_name(self, obj):
+        return obj.product.client.name if obj.product else None
+    get_client_name.short_description = 'Client Name'
+    
+    def get_prospect_geography(self, obj):
+        return obj.prospect.geography if obj.prospect else None
+    get_prospect_geography.short_description = 'Prospect Geography'
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj:  # If editing an existing meeting
+            form.base_fields['qualifying_question_responses'].queryset = obj.qualifying_question_responses.all()
+            form.base_fields['use_cases'].queryset = obj.use_cases.all()
+        return form
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related('qualifying_question_responses', 'use_cases')
+
+    def get_inline_instances(self, request, obj=None):
+        inline_instances = super().get_inline_instances(request, obj)
+        if obj:
+            for inline in inline_instances:
+                if isinstance(inline, QualifyingQuestionResponseInline):
+                    inline.instance = obj
+        return inline_instances
+
+admin.site.register(Meeting, MeetingAdmin)
