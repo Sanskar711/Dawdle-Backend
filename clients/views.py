@@ -140,7 +140,7 @@ def update_client_info(request):
             return JsonResponse({'error': 'Unauthorized'}, status=401)
 
         try:
-            data = json.load(request.data)
+            data = json.load(request.body)
         except ValueError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
