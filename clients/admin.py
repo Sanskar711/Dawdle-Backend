@@ -112,3 +112,6 @@ class MeetingAdmin(admin.ModelAdmin):
         return qs.prefetch_related('qualifying_question_responses', 'use_cases')
 
 admin.site.register(Meeting, MeetingAdmin)
+
+class MeetingQualifyingQuestionResponseAdmin(admin.ModelAdmin):
+    list_display = ('meeting', 'qualifying_question_response')
