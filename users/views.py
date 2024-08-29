@@ -378,7 +378,7 @@ def send_meeting_notification(meeting, prospect, poc_first_name, poc_last_name):
         logger.error(f"Error sending meeting notification: {e}")
 
 @csrf_exempt
-def create_meeting(request):
+def  create_meeting(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
