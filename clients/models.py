@@ -53,7 +53,7 @@ class Product(models.Model):
     assigned_users = models.ManyToManyField(User, related_name='assigned_clients', blank=True)
     product_prospects = models.ManyToManyField('Prospect', related_name='product', blank=True)
     qualifying_questions = models.ManyToManyField('QualifyingQuestion', related_name='products', blank=True)
-    resources = models.ManyToManyField('Resource', related_name='products')
+    resources = models.ManyToManyField('Resource', related_name='products', blank=True)
     ideal_customer_profiles = models.ManyToManyField('IdealCustomerProfile', related_name='products', blank=True)
 
     def __str__(self):
