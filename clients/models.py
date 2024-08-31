@@ -164,7 +164,7 @@ class Meeting(models.Model):
     scheduled_at = models.DateTimeField()
     
     # Updated Field: Direct ManyToMany relationship
-    ualifying_question_responses = models.ManyToManyField(
+    qualifying_question_responses = models.ManyToManyField(
         QualifyingQuestionResponse,
         related_name='meetings'
     )
