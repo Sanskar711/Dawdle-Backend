@@ -73,7 +73,22 @@ admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(QualifyingQuestionResponse, QualifyingQuestionResponseAdmin)
 admin.site.register(Resource, ResourceAdmin)
 admin.site.register(QualifyingQuestion, QualifyingQuestionAdmin)
-admin.site.register(IdealCustomerProfile)
+class IdealCustomerProfileAdmin(admin.ModelAdmin):
+    list_display = ('industry', 'geography', 'company_size', 'department', 'get_linked_products', 'get_linked_clients')
+
+    def get_linked_products(self, obj):
+        # This assumes a ManyToManyField relationship with Product
+        products = obj.products.all()
+        return ", ".join([product.name for product in products])
+    get_linked_products.short_description = 'Linked Products'
+
+    def get_linked_clients(self, obj):
+        # This assumes a relationship through the Product model to the Client
+        clients = set(product.client.name for product in obj.products.all())
+        return ", ".join(clients)
+    get_linked_clients.short_description = 'Linked Clients'
+
+admin.site.register(IdealCustomerProfile, IdealCustomerProfileAdmin)
 
 @admin.register(EmailRequest)
 class EmailRequestAdmin(admin.ModelAdmin):
