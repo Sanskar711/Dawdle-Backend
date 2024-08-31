@@ -81,6 +81,8 @@ class EmailRequestAdmin(admin.ModelAdmin):
     search_fields = ['poc_email', 'email_subject']
     list_filter = ['status', 'created_at']
 
+from django.db.models import Prefetch
+
 class MeetingAdmin(admin.ModelAdmin):
     list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
     readonly_fields = ('get_client_name', 'get_prospect_geography', 'get_meeting_qualifying_question_responses', 'get_meeting_use_cases')
@@ -103,9 +105,13 @@ class MeetingAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related('qualifying_question_responses', 'use_cases', 'product__client', 'prospect')
+        return qs.select_related('product__client', 'prospect').prefetch_related(
+            'use_cases',
+            Prefetch('qualifying_question_responses')
+        )
 
     def has_add_permission(self, request, obj=None):
         return False  # Disable adding new use cases directly from the meeting admin
 
 admin.site.register(Meeting, MeetingAdmin)
+
