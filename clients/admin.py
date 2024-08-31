@@ -81,17 +81,10 @@ class EmailRequestAdmin(admin.ModelAdmin):
     search_fields = ['poc_email', 'email_subject']
     list_filter = ['status', 'created_at']
 
-
-class UseCaseInline(admin.TabularInline):
-    model = Meeting.use_cases.through
-    extra = 0
-    verbose_name = "Use Case"
-    verbose_name_plural = "Use Cases"
-
 class MeetingAdmin(admin.ModelAdmin):
     list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
-    inlines = [UseCaseInline]  # Only include inlines for related models that are directly accessible
-
+    readonly_fields = ('get_client_name', 'get_prospect_geography', 'get_meeting_qualifying_question_responses', 'get_meeting_use_cases')
+    
     def get_client_name(self, obj):
         return obj.product.client.name if obj.product else None
     get_client_name.short_description = 'Client Name'
@@ -99,19 +92,20 @@ class MeetingAdmin(admin.ModelAdmin):
     def get_prospect_geography(self, obj):
         return obj.prospect.geography if obj.prospect else None
     get_prospect_geography.short_description = 'Prospect Geography'
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        return form
+    
+    def get_meeting_qualifying_question_responses(self, obj):
+        return ", ".join([response.response for response in obj.qualifying_question_responses.all()])
+    get_meeting_qualifying_question_responses.short_description = 'Qualifying Question Responses'
+    
+    def get_meeting_use_cases(self, obj):
+        return ", ".join([use_case.title for use_case in obj.use_cases.all()])
+    get_meeting_use_cases.short_description = 'Linked Use Cases'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related('qualifying_question_responses', 'use_cases')
+        return qs.prefetch_related('qualifying_question_responses', 'use_cases', 'product__client', 'prospect')
+
+    def has_add_permission(self, request, obj=None):
+        return False  # Disable adding new use cases directly from the meeting admin
 
 admin.site.register(Meeting, MeetingAdmin)
-
-class MeetingQualifyingQuestionResponseAdmin(admin.ModelAdmin):
-
-    list_display = ('meeting', 'qualifying_question_response')
-
-admin.site.register(MeetingQualifyingQuestionResponse,MeetingQualifyingQuestionResponseAdmin)
