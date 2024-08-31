@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse, EmailRequest
+from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse, EmailRequest, MeetingQualifyingQuestionResponse
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
@@ -111,6 +111,7 @@ class MeetingAdmin(admin.ModelAdmin):
 admin.site.register(Meeting, MeetingAdmin)
 
 class MeetingQualifyingQuestionResponseAdmin(admin.ModelAdmin):
+
     list_display = ('meeting', 'qualifying_question_response')
 
-admin.site.register(MeetingQualifyingQuestionResponseAdmin)
+admin.site.register(MeetingQualifyingQuestionResponse,MeetingQualifyingQuestionResponseAdmin)
