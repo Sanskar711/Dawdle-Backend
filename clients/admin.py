@@ -112,3 +112,5 @@ admin.site.register(Meeting, MeetingAdmin)
 
 class MeetingQualifyingQuestionResponseAdmin(admin.ModelAdmin):
     list_display = ('meeting', 'qualifying_question_response')
+
+admin.site.register(MeetingQualifyingQuestionResponseAdmin)
