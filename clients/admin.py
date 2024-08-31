@@ -6,10 +6,64 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users',)
 
+import pandas as pd
+from django.contrib import admin
+from django.shortcuts import redirect
+from django.urls import path
+from django.http import HttpResponse
+from django.contrib import messages
+from io import BytesIO
+
 class ProspectAdmin(admin.ModelAdmin):
-    list_display = ('company_name', 'is_approved', 'geography', 'status')
+    list_display = ('company_name', 'get_clients', 'get_products', 'is_approved', 'geography', 'status')
     list_filter = ('is_approved', 'status', 'geography')
     search_fields = ('company_name', 'geography')
+
+    # Adding custom admin action for bulk upload
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('upload-excel/', self.upload_excel, name='upload_excel'),
+        ]
+        return custom_urls + urls
+
+    def upload_excel(self, request):
+        if request.method == "POST":
+            try:
+                excel_file = request.FILES["excel_file"]
+                df = pd.read_excel(excel_file)
+                for _, row in df.iterrows():
+                    client = Client.objects.get(name=row['Client Name'])
+                    products = Product.objects.filter(name__in=row['Product Names'].split(','), client=client)
+                    prospect = Prospect.objects.create(
+                        company_name=row['Company Name'],
+                        geography=row['Geography'],
+                        status=row['Status'],
+                        is_approved=row['Is Approved'],
+                        is_visible=row['Is Visible'],
+                    )
+                    prospect.product_set.add(*products)
+                self.message_user(request, "Prospects uploaded successfully.", messages.SUCCESS)
+            except Exception as e:
+                self.message_user(request, f"Error during upload: {str(e)}", messages.ERROR)
+            return redirect("..")
+        return HttpResponse('''<form method="post" enctype="multipart/form-data">
+                               <input type="file" name="excel_file">
+                               <button type="submit">Upload</button>
+                               </form>''')
+
+    # Methods to display linked clients and products in the admin list view
+    def get_clients(self, obj):
+        clients = set(product.client.name for product in obj.product_set.all())
+        return ", ".join(clients)
+    get_clients.short_description = 'Clients'
+
+    def get_products(self, obj):
+        return ", ".join([product.name for product in obj.product_set.all()])
+    get_products.short_description = 'Products'
+    
+admin.site.register(Prospect, ProspectAdmin)
+
 
 class UseCaseAdmin(admin.ModelAdmin):
     list_display = ('title', 'description', 'get_linked_products')
