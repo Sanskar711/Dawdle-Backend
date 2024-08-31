@@ -123,7 +123,6 @@ class QualifyingQuestionAdmin(admin.ModelAdmin):
 admin.site.register(Client)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(UseCase, UseCaseAdmin)
-admin.site.register(Prospect, ProspectAdmin)
 admin.site.register(QualifyingQuestionResponse, QualifyingQuestionResponseAdmin)
 admin.site.register(Resource, ResourceAdmin)
 admin.site.register(QualifyingQuestion, QualifyingQuestionAdmin)
