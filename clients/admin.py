@@ -54,12 +54,12 @@ class ProspectAdmin(admin.ModelAdmin):
 
     # Methods to display linked clients and products in the admin list view
     def get_clients(self, obj):
-        clients = set(product.client.name for product in obj.product_set.all())
+        clients = set(product.client.name for product in obj.product.all())  # Corrected line
         return ", ".join(clients)
     get_clients.short_description = 'Clients'
 
     def get_products(self, obj):
-        return ", ".join([product.name for product in obj.product_set.all()])
+        return ", ".join([product.name for product in obj.product.all()])  # Corrected line
     get_products.short_description = 'Products'
     
 admin.site.register(Prospect, ProspectAdmin)
