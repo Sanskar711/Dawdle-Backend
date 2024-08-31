@@ -118,6 +118,8 @@ class UseCase(models.Model):
         return self.title
 
 
+
+
 class Prospect(models.Model):
     
     company_name = models.CharField(max_length=255)
@@ -135,6 +137,17 @@ class Prospect(models.Model):
     def __str__(self):
         return f"{self.company_name}"
     
+
+
+from django.db import models
+
+class QualifyingQuestionResponse(models.Model):
+    qualifying_question = models.ForeignKey('QualifyingQuestion', on_delete=models.CASCADE)
+    response = models.TextField()
+
+    def __str__(self):
+        return f"Response to {self.qualifying_question}"
+
 
 
 class Meeting(models.Model):
@@ -167,12 +180,28 @@ class Meeting(models.Model):
     def __str__(self):
         return f"Meeting with {self.prospect.company_name} scheduled at {self.scheduled_at}"
 
-class QualifyingQuestionResponse(models.Model):
-    qualifying_question = models.ForeignKey('QualifyingQuestion', on_delete=models.CASCADE)
-    response = models.TextField()
+
+class EmailRequest(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True)
+    poc_first_name = models.CharField(max_length=255)
+    poc_last_name = models.CharField(max_length=255)
+    poc_email = models.EmailField()
+    poc_designation = models.CharField(max_length=255)
+    email_subject = models.CharField(max_length=255)
+    email_body = models.TextField()
+    status = models.CharField(max_length=50, default='pending', choices=[
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ])
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Response to {self.qualifying_question}"
+        return f"Email to {self.poc_email} by {self.user.email}"
+    
+    
 
 
     

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse, EmailRequest, MeetingQualifyingQuestionResponse
+from .models import Client, Product, UseCase, Prospect, Meeting, QualifyingQuestion, Resource, IdealCustomerProfile, QualifyingQuestionResponse, EmailRequest
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
