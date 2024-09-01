@@ -160,6 +160,7 @@ class Meeting(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True)
     prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
     scheduled_at = models.DateTimeField()
+    meeting_notes=models.TextField(blank=True, null=True)
     
     # New Fields
     qualifying_question_responses = models.ManyToManyField(
