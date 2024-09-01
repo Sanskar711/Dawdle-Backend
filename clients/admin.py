@@ -172,19 +172,17 @@ class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
-    filter_horizontal = ('assigned_users',)
+    filter_horizontal = ('assigned_users', 'qualifying_questions', 'icp', 'resources')
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         product_id = request.resolver_match.kwargs.get('object_id')
         if product_id:
-            if db_field.name == "product_prospects":
-                kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
-            elif db_field.name == "qualifying_questions":
-                kwargs["queryset"] = QualifyingQuestion.objects.filter(product__id=product_id)
+            if db_field.name == "qualifying_questions":
+                kwargs["queryset"] = QualifyingQuestion.objects.filter(products__id=product_id)
             elif db_field.name == "icp":
-                kwargs["queryset"] = ICP.objects.filter(product__id=product_id)
+                kwargs["queryset"] = IdealCustomerProfile.objects.filter(products__id=product_id)
             elif db_field.name == "resources":
-                kwargs["queryset"] = Resource.objects.filter(product__id=product_id)
+                kwargs["queryset"] = Resource.objects.filter(products__id=product_id)
         else:
             kwargs["queryset"] = db_field.related_model.objects.none()
         
