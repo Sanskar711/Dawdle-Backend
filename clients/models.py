@@ -148,6 +148,8 @@ class QualifyingQuestionResponse(models.Model):
     def __str__(self):
         return f"Response to {self.qualifying_question}"
 
+
+
 class Meeting(models.Model):
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
@@ -157,29 +159,29 @@ class Meeting(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
     scheduled_at = models.DateTimeField()
     meeting_notes=models.TextField(blank=True, null=True)
     
-    # New Fields
+    # Updated Field: Direct ManyToMany relationship
     qualifying_question_responses = models.ManyToManyField(
         QualifyingQuestionResponse,
-        through='MeetingQualifyingQuestionResponse',
         related_name='meetings'
     )
     use_cases = models.ManyToManyField('UseCase', related_name='meetings')
-    poc_first_name = models.CharField(max_length=255,null=True)
-    poc_last_name = models.CharField(max_length=255,null=True)
+    poc_first_name = models.CharField(max_length=255, null=True)
+    poc_last_name = models.CharField(max_length=255, null=True)
     poc_email = models.EmailField(null=True)
-    poc_phone_number = models.CharField(max_length=20,null=True)
-    poc_designation = models.CharField(max_length=255,null=True)
+    poc_phone_number = models.CharField(max_length=20, null=True)
+    poc_designation = models.CharField(max_length=255, null=True)
     other_relevant_details = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
 
     def __str__(self):
         return f"Meeting with {self.prospect.company_name} scheduled at {self.scheduled_at}"
-    
+
+
 class EmailRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     prospect = models.ForeignKey('Prospect', on_delete=models.CASCADE)
@@ -201,10 +203,6 @@ class EmailRequest(models.Model):
         return f"Email to {self.poc_email} by {self.user.email}"
     
     
-    
-class MeetingQualifyingQuestionResponse(models.Model):
-    meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
-    qualifying_question_response = models.ForeignKey('QualifyingQuestionResponse', on_delete=models.CASCADE)
 
 
     
