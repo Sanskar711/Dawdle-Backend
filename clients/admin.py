@@ -12,7 +12,6 @@ from django.shortcuts import redirect
 from django.urls import path
 from django.http import HttpResponse
 from django.contrib import messages
-from io import BytesIO
 
 class ProspectAdmin(admin.ModelAdmin):
     list_display = ('company_name', 'get_clients', 'get_products', 'is_approved', 'geography', 'status')
@@ -51,7 +50,11 @@ class ProspectAdmin(admin.ModelAdmin):
                                <input type="file" name="excel_file">
                                <button type="submit">Upload</button>
                                </form>''')
-
+    
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['upload_excel_url'] = 'upload-excel/'
+        return super().changelist_view(request, extra_context=extra_context)
     # Methods to display linked clients and products in the admin list view
     def get_clients(self, obj):
         clients = set(product.client.name for product in obj.product.all())  # Corrected line
