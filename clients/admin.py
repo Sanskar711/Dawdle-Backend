@@ -220,6 +220,11 @@ class EmailRequestAdmin(admin.ModelAdmin):
     list_filter = ['status', 'created_at']
 
 from django.db.models import Prefetch
+
+class MeetingAdminForm(forms.ModelForm):
+    class Meta:
+        model = Meeting
+        exclude = ('qualifying_question_responses', 'use_cases')
 from django.utils.html import format_html, format_html_join
 
 class MeetingAdmin(admin.ModelAdmin):
