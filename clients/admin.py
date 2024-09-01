@@ -220,11 +220,8 @@ class EmailRequestAdmin(admin.ModelAdmin):
     list_filter = ['status', 'created_at']
 
 from django.db.models import Prefetch
-from django.utils.html import format_html
-class MeetingAdminForm(forms.ModelForm):
-    class Meta:
-        model = Meeting
-        exclude = ('qualifying_question_responses', 'use_cases')
+from django.utils.html import format_html, format_html_join
+
 class MeetingAdmin(admin.ModelAdmin):
     form = MeetingAdminForm
     
@@ -246,18 +243,18 @@ class MeetingAdmin(admin.ModelAdmin):
     
     def get_meeting_qualifying_question_responses(self, obj):
         # Display each qualifying question with its corresponding response
-        responses_html = ""
-        for response in obj.qualifying_question_responses.all():
-            question_text = response.qualifying_question.question
-            response_text = response.response
-            responses_html += f"<strong>{question_text}:</strong> {response_text}<br>"
-        return format_html(responses_html)
+        responses_html = format_html_join(
+            '', 
+            '<div style="margin-bottom: 10px;"><strong>{}</strong>: {}</div>',
+            [(response.qualifying_question.question, response.response) for response in obj.qualifying_question_responses.all()]
+        )
+        return format_html('<div class="qualifying-questions" style="max-height: 200px; overflow-y: auto;">{}</div>', responses_html)
     get_meeting_qualifying_question_responses.short_description = 'Qualifying Question Responses'
 
     def get_meeting_use_cases(self, obj):
         # Display the linked use cases in a read-only format
         use_cases = ", ".join([use_case.title for use_case in obj.use_cases.all()])
-        return use_cases
+        return format_html('<div class="use-cases" style="max-height: 200px; overflow-y: auto;">{}</div>', use_cases)
     get_meeting_use_cases.short_description = 'Linked Use Cases'
 
     def get_queryset(self, request):
@@ -276,4 +273,5 @@ class MeetingAdmin(admin.ModelAdmin):
         return super().has_change_permission(request, obj)
 
 admin.site.register(Meeting, MeetingAdmin)
+
 
