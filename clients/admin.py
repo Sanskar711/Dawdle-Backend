@@ -12,7 +12,6 @@ from django.shortcuts import redirect
 from django.urls import path
 from django.http import HttpResponse
 from django.contrib import messages
-from io import BytesIO
 
 class ProspectAdmin(admin.ModelAdmin):
     list_display = ('company_name', 'get_clients', 'get_products', 'is_approved', 'geography', 'status')
@@ -51,7 +50,11 @@ class ProspectAdmin(admin.ModelAdmin):
                                <input type="file" name="excel_file">
                                <button type="submit">Upload</button>
                                </form>''')
-
+    
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['upload_excel_url'] = 'upload-excel/'
+        return super().changelist_view(request, extra_context=extra_context)
     # Methods to display linked clients and products in the admin list view
     def get_clients(self, obj):
         clients = set(product.client.name for product in obj.product.all())  # Corrected line
@@ -121,7 +124,74 @@ class QualifyingQuestionAdmin(admin.ModelAdmin):
     get_linked_clients.short_description = 'Linked Clients'
 
 admin.site.register(Client)
+from django import forms
+# Custom Form for Product Admin
+class ProductForm(forms.ModelForm):
+    new_prospect = forms.CharField(max_length=255, required=False, help_text="Add a new prospect for this product.")
+    new_qualifying_question = forms.CharField(max_length=255, required=False, help_text="Add a new qualifying question for this product.")
+    new_icp = forms.CharField(max_length=255, required=False, help_text="Add a new ICP for this product.")
+    new_resource = forms.CharField(max_length=255, required=False, help_text="Add a new resource for this product.")
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Add new Prospect
+        new_prospect_name = self.cleaned_data.get('new_prospect')
+        if new_prospect_name:
+            prospect = Prospect.objects.create(company_name=new_prospect_name)
+            instance.product_prospects.add(prospect)
+
+        # Add new Qualifying Question
+        new_qualifying_question_text = self.cleaned_data.get('new_qualifying_question')
+        if new_qualifying_question_text:
+            question = QualifyingQuestion.objects.create(question=new_qualifying_question_text)
+            instance.qualifying_questions.add(question)
+
+        # Add new ICP
+        new_icp_name = self.cleaned_data.get('new_icp')
+        if new_icp_name:
+            icp = IdealCustomerProfile.objects.create(name=new_icp_name)
+            instance.icp.add(icp)
+
+        # Add new Resource
+        new_resource_name = self.cleaned_data.get('new_resource')
+        if new_resource_name:
+            resource = Resource.objects.create(name=new_resource_name)
+            instance.resources.add(resource)
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+    
+class ProductAdmin(admin.ModelAdmin):
+    form = ProductForm
+    list_display = ('name', 'client')
+    search_fields = ('name', 'client__name')
+    filter_horizontal = ('assigned_users', 'qualifying_questions', 'icp', 'resources')
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        product_id = request.resolver_match.kwargs.get('object_id')
+        if product_id:
+            if db_field.name == "qualifying_questions":
+                kwargs["queryset"] = QualifyingQuestion.objects.filter(products__id=product_id)
+            elif db_field.name == "icp":
+                kwargs["queryset"] = IdealCustomerProfile.objects.filter(products__id=product_id)
+            elif db_field.name == "resources":
+                kwargs["queryset"] = Resource.objects.filter(products__id=product_id)
+        else:
+            kwargs["queryset"] = db_field.related_model.objects.none()
+        
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
 admin.site.register(Product, ProductAdmin)
+
+
+
 admin.site.register(UseCase, UseCaseAdmin)
 admin.site.register(QualifyingQuestionResponse, QualifyingQuestionResponseAdmin)
 admin.site.register(Resource, ResourceAdmin)
@@ -151,10 +221,23 @@ class EmailRequestAdmin(admin.ModelAdmin):
 
 from django.db.models import Prefetch
 
+class MeetingAdminForm(forms.ModelForm):
+    class Meta:
+        model = Meeting
+        exclude = ('qualifying_question_responses', 'use_cases')
+from django.utils.html import format_html, format_html_join
+
 class MeetingAdmin(admin.ModelAdmin):
-    list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
-    readonly_fields = ('get_client_name', 'get_prospect_geography', 'get_meeting_qualifying_question_responses', 'get_meeting_use_cases')
+    form = MeetingAdminForm
     
+    list_display = ('prospect', 'get_client_name', 'get_prospect_geography', 'scheduled_at', 'status')
+    readonly_fields = (
+        'get_client_name',
+        'get_prospect_geography',
+        'get_meeting_qualifying_question_responses',
+        'get_meeting_use_cases',
+    )
+
     def get_client_name(self, obj):
         return obj.product.client.name if obj.product else None
     get_client_name.short_description = 'Client Name'
@@ -164,11 +247,19 @@ class MeetingAdmin(admin.ModelAdmin):
     get_prospect_geography.short_description = 'Prospect Geography'
     
     def get_meeting_qualifying_question_responses(self, obj):
-        return ", ".join([response.response for response in obj.qualifying_question_responses.all()])
+        # Display each qualifying question with its corresponding response
+        responses_html = format_html_join(
+            '', 
+            '<div style="margin-bottom: 10px;"><strong>{}</strong>: {}</div>',
+            [(response.qualifying_question.question, response.response) for response in obj.qualifying_question_responses.all()]
+        )
+        return format_html('<div class="qualifying-questions" style="max-height: 200px; overflow-y: auto;">{}</div>', responses_html)
     get_meeting_qualifying_question_responses.short_description = 'Qualifying Question Responses'
-    
+
     def get_meeting_use_cases(self, obj):
-        return ", ".join([use_case.title for use_case in obj.use_cases.all()])
+        # Display the linked use cases in a read-only format
+        use_cases = ", ".join([use_case.title for use_case in obj.use_cases.all()])
+        return format_html('<div class="use-cases" style="max-height: 200px; overflow-y: auto;">{}</div>', use_cases)
     get_meeting_use_cases.short_description = 'Linked Use Cases'
 
     def get_queryset(self, request):
@@ -179,7 +270,13 @@ class MeetingAdmin(admin.ModelAdmin):
         )
 
     def has_add_permission(self, request, obj=None):
-        return False  # Disable adding new use cases directly from the meeting admin
+        # Prevent the addition of new items in the admin interface
+        return False  
+
+    def has_change_permission(self, request, obj=None):
+        # Allow changing but not adding or removing Use Cases
+        return super().has_change_permission(request, obj)
 
 admin.site.register(Meeting, MeetingAdmin)
+
 
