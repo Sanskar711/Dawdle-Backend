@@ -9,6 +9,10 @@ class Client(models.Model):
     calendly_link = models.URLField(help_text="Link to the company's Calendly schedule.", null=True)
     company_logo = models.ImageField(upload_to='company_logos/', help_text="Upload the company logo.", null=True, blank=True)
     email = models.EmailField(unique=True)  # Set email as unique
+    additional_emails = models.TextField(help_text="Comma-separated list of additional emails.", null=True, blank=True)
+
+    def get_all_emails(self):
+        return [self.email] + (self.additional_emails.split(',') if self.additional_emails else [])
 
     def __str__(self):
         return self.name

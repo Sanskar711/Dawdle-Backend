@@ -21,18 +21,21 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.parsers import JSONParser
+from django.db.models import Value as V, TextField
+from django.db.models.functions import Concat
+
 
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
-def send_client_otp(client):
+def send_client_otp(client, email):
     code = get_random_string(6, allowed_chars='0123456789')
-    OTP.objects.create(client=client, code=code)  # Assuming OTP model has a foreign key to Client
+    OTP.objects.create(client=client, code=code)
 
     subject = f'{client.name}, Your OTP Code'
     message = f'Your OTP code is {code}'
     from_email = EMAIL_HOST_USER
-    recipient_list = [client.email]
+    recipient_list = [email]
 
     msg = MIMEMultipart()
     msg['From'] = from_email
@@ -51,10 +54,10 @@ def send_client_otp(client):
             server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
             logger.info("Sending email")
             server.sendmail(from_email, recipient_list, msg.as_string())
-            logger.info(
-                f"Email sent: {subject} - {message} to {recipient_list}")
+            logger.info(f"Email sent: {subject} - {message} to {recipient_list}")
     except Exception as e:
         logger.error(f"Error sending OTP: {e}")
+
 
 @csrf_exempt
 def signin_client(request):
@@ -66,13 +69,17 @@ def signin_client(request):
                 return JsonResponse({"error": "Email is required."}, status=400)
 
             client = Client.objects.filter(email=email).first()
+            if not client:
+                # For non-PostgreSQL databases:
+                client = Client.objects.annotate(
+                    emails=Concat('email', V(','), 'additional_emails', output_field=TextField())
+                ).filter(emails__contains=email).first()
+
             if client:
-                send_client_otp(client)
-                response = JsonResponse(
-                    {"message": "OTP sent successfully", "client_id": client.id}, status=200)
+                send_client_otp(client, email)
+                response = JsonResponse({"message": "OTP sent successfully", "client_id": client.id}, status=200)
             else:
-                response = JsonResponse(
-                    {"error": "Client not found"}, status=404)
+                response = JsonResponse({"error": "Client not found"}, status=404)
 
             return response
 
@@ -83,6 +90,7 @@ def signin_client(request):
     except Exception as e:
         logger.error(f"Error during client login process: {e}")
         return HttpResponseServerError('An error occurred during login. Please try again later.')
+
 
 def generate_client_jwt_token(client):
     now = datetime.now(timezone.utc)
@@ -108,7 +116,7 @@ def verify_client_otp_login(request, client_id):
         except (json.JSONDecodeError, KeyError):
             return JsonResponse({"error": "Invalid request payload"}, status=400)
 
-        otp = OTP.objects.filter(client=client, code=code, is_used=False).first()  # Assuming OTP has a foreign key to Client
+        otp = OTP.objects.filter(client=client, code=code, is_used=False).first()
         if otp and otp.is_valid():
             otp.is_used = True
             otp.delete()
@@ -118,6 +126,7 @@ def verify_client_otp_login(request, client_id):
         return JsonResponse({"error": "Invalid or expired OTP"}, status=400)
 
     return JsonResponse({"message": "Invalid request method"}, status=405)
+
 
 @csrf_exempt
 def client_info(request):
