@@ -178,7 +178,7 @@ class ProspectInline(admin.StackedInline):
     verbose_name_plural = 'Prospects'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "prospect":
+        if db_field.name == "product_prospects":
             product_id = request.resolver_match.kwargs.get('object_id')
             if product_id:
                 # Filter to show only prospects linked to the current product
