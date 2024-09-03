@@ -47,9 +47,10 @@ class ProspectAdmin(admin.ModelAdmin):
                 self.message_user(request, f"Error during upload: {str(e)}", messages.ERROR)
             return redirect("..")
         return HttpResponse('''<form method="post" enctype="multipart/form-data">
-                               <input type="file" name="excel_file">
-                               <button type="submit">Upload</button>
-                               </form>''')
+                       {% csrf_token %}
+                       <input type="file" name="excel_file">
+                       <button type="submit">Upload</button>
+                       </form>''')
     
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
