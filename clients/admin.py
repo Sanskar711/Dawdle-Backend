@@ -187,16 +187,16 @@ class ProspectInline(admin.StackedInline):
     verbose_name_plural = 'Prospects'
     form = ProductProspectInlineForm
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "product_prospects":
-            product_id = request.resolver_match.kwargs.get('object_id')
-            if product_id:
-            # This should include all relevant prospects
-                kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) | Prospect.objects.filter(product__isnull=True)
-            else:
-            # In case of new product or no product selected
-                kwargs["queryset"] = Prospect.objects.none()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     if db_field.name == "product_prospects":
+    #         product_id = request.resolver_match.kwargs.get('object_id')
+    #         if product_id:
+    #         # This should include all relevant prospects
+    #             kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) | Prospect.objects.filter(product__isnull=True)
+    #         else:
+    #         # In case of new product or no product selected
+    #             kwargs["queryset"] = Prospect.objects.none()
+    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_new(self, form, commit=True):
         instance = form.save(commit=False)
