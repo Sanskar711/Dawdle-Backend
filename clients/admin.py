@@ -188,13 +188,11 @@ class ProspectInline(admin.StackedInline):
 
     def save_new(self, form, commit=True):
         instance = form.save(commit=False)
-        product_id = self.parent_model.objects.get(pk=self.get_object_id(form))
-        if product_id:
+        product = Product.objects.get(pk=self.get_object_id(form))
+        if commit:
             instance.save()
-            # Manually link the new prospect to the product
-            product = Product.objects.get(pk=product_id)
             product.product_prospects.add(instance)
-            return instance
+        return instance
 
     def get_object_id(self, form):
         return form.instance.pk if form.instance.pk else self.parent_model.objects.latest('pk').pk
