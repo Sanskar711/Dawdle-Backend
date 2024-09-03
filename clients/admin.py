@@ -174,7 +174,7 @@ from django import forms
 
 class ProductProspectInlineForm(forms.ModelForm):
     class Meta:
-        model = Product
+        model = Product.product_prospects.through
         fields = '__all__'
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Enter prospect name'}),
