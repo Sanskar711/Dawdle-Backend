@@ -183,9 +183,7 @@ class ProspectInline(admin.StackedInline):
             if product_id:
                 # Filter to show only prospects linked to the current product
                 kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
-            else:
-                # No prospects are shown when creating a new product, or allow adding new prospects
-                kwargs["queryset"] = Prospect.objects.none()
+            
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_new(self, form, commit=True):
