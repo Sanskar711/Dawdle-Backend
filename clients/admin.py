@@ -215,7 +215,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources','product_prospects','use_cases')
     class Media:
-        js = ('js/disable_selection.js',)  # Path to your JS file
+        js = ('clients/static/js/disable_selection.js',) # Path to your JS file
     # inlines = [ProspectInline]
     # exclude = ('product_prospects',)
     def formfield_for_manytomany(self, db_field, request, **kwargs):
