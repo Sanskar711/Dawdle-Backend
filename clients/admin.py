@@ -126,50 +126,50 @@ class QualifyingQuestionAdmin(admin.ModelAdmin):
 admin.site.register(Client)
 from django import forms
 # Custom Form for Product Admin
-class ProductForm(forms.ModelForm):
-    new_prospect = forms.CharField(max_length=255, required=False, help_text="Add a new prospect for this product.")
-    new_qualifying_question = forms.CharField(max_length=255, required=False, help_text="Add a new qualifying question for this product.")
-    new_icp = forms.CharField(max_length=255, required=False, help_text="Add a new ICP for this product.")
-    new_resource = forms.CharField(max_length=255, required=False, help_text="Add a new resource for this product.")
+# class ProductForm(forms.ModelForm):
+#     new_prospect = forms.CharField(max_length=255, required=False, help_text="Add a new prospect for this product.")
+#     new_qualifying_question = forms.CharField(max_length=255, required=False, help_text="Add a new qualifying question for this product.")
+#     new_icp = forms.CharField(max_length=255, required=False, help_text="Add a new ICP for this product.")
+#     new_resource = forms.CharField(max_length=255, required=False, help_text="Add a new resource for this product.")
 
-    class Meta:
-        model = Product
-        fields = '__all__'
+#     class Meta:
+#         model = Product
+#         fields = '__all__'
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
 
-        # Add new Prospect
-        new_prospect_name = self.cleaned_data.get('new_prospect')
-        if new_prospect_name:
-            prospect = Prospect.objects.create(company_name=new_prospect_name)
-            instance.product_prospects.add(prospect)
+#         # Add new Prospect
+#         new_prospect_name = self.cleaned_data.get('new_prospect')
+#         if new_prospect_name:
+#             prospect = Prospect.objects.create(company_name=new_prospect_name)
+#             instance.product_prospects.add(prospect)
 
-        # Add new Qualifying Question
-        new_qualifying_question_text = self.cleaned_data.get('new_qualifying_question')
-        if new_qualifying_question_text:
-            question = QualifyingQuestion.objects.create(question=new_qualifying_question_text)
-            instance.qualifying_questions.add(question)
+#         # Add new Qualifying Question
+#         new_qualifying_question_text = self.cleaned_data.get('new_qualifying_question')
+#         if new_qualifying_question_text:
+#             question = QualifyingQuestion.objects.create(question=new_qualifying_question_text)
+#             instance.qualifying_questions.add(question)
 
-        # Add new ICP
-        new_icp_name = self.cleaned_data.get('new_icp')
-        if new_icp_name:
-            icp = IdealCustomerProfile.objects.create(name=new_icp_name)
-            instance.ideal_customer_profiles.add(icp)
+#         # Add new ICP
+#         new_icp_name = self.cleaned_data.get('new_icp')
+#         if new_icp_name:
+#             icp = IdealCustomerProfile.objects.create(name=new_icp_name)
+#             instance.ideal_customer_profiles.add(icp)
 
-        # Add new Resource
-        new_resource_name = self.cleaned_data.get('new_resource')
-        if new_resource_name:
-            resource = Resource.objects.create(name=new_resource_name)
-            instance.resources.add(resource)
+#         # Add new Resource
+#         new_resource_name = self.cleaned_data.get('new_resource')
+#         if new_resource_name:
+#             resource = Resource.objects.create(name=new_resource_name)
+#             instance.resources.add(resource)
 
-        if commit:
-            instance.save()
-            self.save_m2m()
-        return instance
+#         if commit:
+#             instance.save()
+#             self.save_m2m()
+#         return instance
     
 class ProductAdmin(admin.ModelAdmin):
-    form = ProductForm
+    # form = ProductForm
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources')
@@ -183,6 +183,8 @@ class ProductAdmin(admin.ModelAdmin):
                 kwargs["queryset"] = IdealCustomerProfile.objects.filter(products__id=product_id)
             elif db_field.name == "resources":
                 kwargs["queryset"] = Resource.objects.filter(products__id=product_id)
+            elif db_field.name == "product_prospects":
+                kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
         else:
             kwargs["queryset"] = db_field.related_model.objects.none()
         
