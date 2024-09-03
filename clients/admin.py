@@ -171,11 +171,21 @@ from django import forms
 #             self.save_m2m()
 #         return instance
 # Create an inline admin descriptor for Prospect model
+
+class ProductProspectInlineForm(forms.ModelForm):
+    class Meta:
+        model = Prospect
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Enter prospect name'}),
+        }
+
 class ProspectInline(admin.StackedInline):
     model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
     extra = 1  # Number of empty forms to display
     can_delete = True
     verbose_name_plural = 'Prospects'
+    form = ProductProspectInlineForm
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "prospect":
