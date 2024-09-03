@@ -198,7 +198,7 @@ class ProductAdmin(admin.ModelAdmin):
         elif db_field.name == "resources":
             kwargs["queryset"] = Resource.objects.filter(products__id=product_id) if product_id else Resource.objects.all()
         elif db_field.name == "product_prospects":
-            kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) if product_id else Prospect.objects.all()
+            kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) if product_id else None
         elif db_field.name == "use_cases":
             kwargs["queryset"] = UseCase.objects.filter(products__id=product_id) if product_id else UseCase.objects.all()
         
