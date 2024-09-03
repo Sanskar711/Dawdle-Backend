@@ -121,12 +121,12 @@ CORS_ORIGIN_REGEX_WHITELIST = [
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'mail.dawdle.live'
 EMAIL_PORT = 587  # or 465 for SSL
 EMAIL_USE_TLS = True  # or EMAIL_USE_SSL = True for SSL
-EMAIL_HOST_USER = 'rishab0724@gmail.com'
-EMAIL_HOST_PASSWORD = 'ynzbjnclhpjnaxbn'
-ADMIN_EMAIL = 'rishikesh@dawdle.live'
+EMAIL_HOST_USER = 'support@dawdle.live'
+EMAIL_HOST_PASSWORD = 'Dawdle@123'
+ADMIN_EMAIL = 'support@dawdle.live'
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
