@@ -178,7 +178,7 @@ class ProspectInline(admin.StackedInline):
     verbose_name_plural = 'Prospects'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "product_prospects":
+        if db_field.name == "prospect":
             product_id = request.resolver_match.kwargs.get('object_id')
             if product_id:
                 # Filter to show only prospects linked to the current product
@@ -188,12 +188,19 @@ class ProspectInline(admin.StackedInline):
                 kwargs["queryset"] = Prospect.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        product_id = request.resolver_match.kwargs.get('object_id')
+    def save_new(self, form, commit=True):
+        instance = form.save(commit=False)
+        product_id = self.parent_model.objects.get(pk=self.get_object_id(form))
         if product_id:
-            qs = qs.filter(product__id=product_id)
-        return qs
+            instance.save()
+            # Manually link the new prospect to the product
+            product = Product.objects.get(pk=product_id)
+            product.product_prospects.add(instance)
+            return instance
+
+    def get_object_id(self, form):
+        return form.instance.pk if form.instance.pk else self.parent_model.objects.latest('pk').pk
+
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
