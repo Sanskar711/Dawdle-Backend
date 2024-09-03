@@ -64,6 +64,9 @@ class ProspectAdmin(admin.ModelAdmin):
     def get_products(self, obj):
         return ", ".join([product.name for product in obj.product.all()])  # Corrected line
     get_products.short_description = 'Products'
+
+    def has_add_permission(self, request):
+        return request.user.has_perm('clients.add_prospect')
     
 admin.site.register(Prospect, ProspectAdmin)
 
