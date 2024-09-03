@@ -206,7 +206,7 @@ class ProductAdmin(admin.ModelAdmin):
     filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources')
     
     inlines = [ProspectInline]
-
+    exclude = ('product_prospects',)
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         product_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "qualifying_questions":
