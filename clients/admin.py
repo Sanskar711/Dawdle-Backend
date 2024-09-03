@@ -66,7 +66,7 @@ class ProspectAdmin(admin.ModelAdmin):
     get_products.short_description = 'Products'
 
     def has_add_permission(self, request):
-        return request.user.has_perm('clients.add_prospect')
+        return False
     
 admin.site.register(Prospect, ProspectAdmin)
 
