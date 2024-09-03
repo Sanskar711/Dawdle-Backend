@@ -179,7 +179,11 @@ class ProspectInline(admin.StackedInline):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "prospect":
-            kwargs["queryset"] = Prospect.objects.all()  # Customize this as needed
+            product_id = request.resolver_match.kwargs.get('object_id')
+            if product_id:
+                kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
+            else:
+                kwargs["queryset"] = Prospect.objects.none()  # No prospects are shown when creating a new product
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class ProductAdmin(admin.ModelAdmin):
