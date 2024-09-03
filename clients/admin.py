@@ -155,7 +155,7 @@ class ProductForm(forms.ModelForm):
         new_icp_name = self.cleaned_data.get('new_icp')
         if new_icp_name:
             icp = IdealCustomerProfile.objects.create(name=new_icp_name)
-            instance.icp.add(icp)
+            instance.ideal_customer_profiles.add(icp)
 
         # Add new Resource
         new_resource_name = self.cleaned_data.get('new_resource')
