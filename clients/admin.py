@@ -65,8 +65,8 @@ class ProspectAdmin(admin.ModelAdmin):
         return ", ".join([product.name for product in obj.product.all()])  # Corrected line
     get_products.short_description = 'Products'
 
-    def has_add_permission(self, request):
-        return False
+    # def has_add_permission(self, request):
+    #     return False
     
 admin.site.register(Prospect, ProspectAdmin)
 
@@ -170,26 +170,37 @@ from django import forms
 #             instance.save()
 #             self.save_m2m()
 #         return instance
-    
+# Create an inline admin descriptor for Prospect model
+class ProspectInline(admin.StackedInline):
+    model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
+    extra = 1  # Number of empty forms to display
+    can_delete = True
+    verbose_name_plural = 'Prospects'
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "prospect":
+            kwargs["queryset"] = Prospect.objects.all()  # Customize this as needed
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 class ProductAdmin(admin.ModelAdmin):
-    # form = ProductForm
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources')
+    
+    inlines = [ProspectInline]
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         product_id = request.resolver_match.kwargs.get('object_id')
-        if product_id:
-            if db_field.name == "qualifying_questions":
-                kwargs["queryset"] = QualifyingQuestion.objects.filter(products__id=product_id)
-            elif db_field.name == "ideal_customer_profiles":
-                kwargs["queryset"] = IdealCustomerProfile.objects.filter(products__id=product_id)
-            elif db_field.name == "resources":
-                kwargs["queryset"] = Resource.objects.filter(products__id=product_id)
-            elif db_field.name == "product_prospects":
-                kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
-        else:
-            kwargs["queryset"] = db_field.related_model.objects.none()
+        if db_field.name == "qualifying_questions":
+            kwargs["queryset"] = QualifyingQuestion.objects.filter(products__id=product_id) if product_id else QualifyingQuestion.objects.all()
+        elif db_field.name == "ideal_customer_profiles":
+            kwargs["queryset"] = IdealCustomerProfile.objects.filter(products__id=product_id) if product_id else IdealCustomerProfile.objects.all()
+        elif db_field.name == "resources":
+            kwargs["queryset"] = Resource.objects.filter(products__id=product_id) if product_id else Resource.objects.all()
+        elif db_field.name == "product_prospects":
+            kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) if product_id else Prospect.objects.all()
+        elif db_field.name == "use_cases":
+            kwargs["queryset"] = UseCase.objects.filter(products__id=product_id) if product_id else UseCase.objects.all()
         
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
