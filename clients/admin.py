@@ -213,7 +213,7 @@ from django import forms
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
-    filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources','product_rospect','use_cases')
+    filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources','product_prospects','use_cases')
     
     # inlines = [ProspectInline]
     # exclude = ('product_prospects',)
