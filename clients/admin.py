@@ -171,23 +171,23 @@ from django import forms
 #             self.save_m2m()
 #         return instance
 # Create an inline admin descriptor for Prospect model
-class ProspectInline(admin.StackedInline):
-    model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
-    extra = 1  # Number of empty forms to display
-    can_delete = True
-    verbose_name_plural = 'Prospects'
+# class ProspectInline(admin.StackedInline):
+#     model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
+#     extra = 1  # Number of empty forms to display
+#     can_delete = True
+#     verbose_name_plural = 'Prospects'
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "prospect":
-            kwargs["queryset"] = Prospect.objects.all()  # Customize this as needed
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+#     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#         if db_field.name == "prospect":
+#             kwargs["queryset"] = Prospect.objects.all()  # Customize this as needed
+#         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
     filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources')
     
-    inlines = [ProspectInline]
+    # inlines = [ProspectInline]
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         product_id = request.resolver_match.kwargs.get('object_id')
