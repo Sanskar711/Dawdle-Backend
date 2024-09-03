@@ -181,10 +181,19 @@ class ProspectInline(admin.StackedInline):
         if db_field.name == "prospect":
             product_id = request.resolver_match.kwargs.get('object_id')
             if product_id:
+                # Filter to show only prospects linked to the current product
                 kwargs["queryset"] = Prospect.objects.filter(product__id=product_id)
             else:
-                kwargs["queryset"] = Prospect.objects.none()  # No prospects are shown when creating a new product
+                # No prospects are shown when creating a new product, or allow adding new prospects
+                kwargs["queryset"] = Prospect.objects.none()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        product_id = request.resolver_match.kwargs.get('object_id')
+        if product_id:
+            qs = qs.filter(product__id=product_id)
+        return qs
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
