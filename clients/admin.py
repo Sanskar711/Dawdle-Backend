@@ -172,51 +172,51 @@ from django import forms
 #         return instance
 # Create an inline admin descriptor for Prospect model
 
-class ProductProspectInlineForm(forms.ModelForm):
-    class Meta:
-        model = Product.product_prospects.through
-        fields = '__all__'
-        widgets = {
-            'name': forms.TextInput(attrs={'placeholder': 'Enter prospect name'}),
-        }
+# class ProductProspectInlineForm(forms.ModelForm):
+#     class Meta:
+#         model = Product.product_prospects.through
+#         fields = '__all__'
+#         widgets = {
+#             'name': forms.TextInput(attrs={'placeholder': 'Enter prospect name'}),
+#         }
 
-class ProspectInline(admin.StackedInline):
-    model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
-    extra = 1  # Number of empty forms to display
-    can_delete = True
-    verbose_name_plural = 'Prospects'
-    form = ProductProspectInlineForm
+# class ProspectInline(admin.StackedInline):
+#     model = Product.product_prospects.through  # Use the through model for the many-to-many relationship
+#     extra = 1  # Number of empty forms to display
+#     can_delete = True
+#     verbose_name_plural = 'Prospects'
+#     form = ProductProspectInlineForm
 
-    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
-    #     if db_field.name == "product_prospects":
-    #         product_id = request.resolver_match.kwargs.get('object_id')
-    #         if product_id:
-    #         # This should include all relevant prospects
-    #             kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) | Prospect.objects.filter(product__isnull=True)
-    #         else:
-    #         # In case of new product or no product selected
-    #             kwargs["queryset"] = Prospect.objects.none()
-    #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
+#     # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#     #     if db_field.name == "product_prospects":
+#     #         product_id = request.resolver_match.kwargs.get('object_id')
+#     #         if product_id:
+#     #         # This should include all relevant prospects
+#     #             kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) | Prospect.objects.filter(product__isnull=True)
+#     #         else:
+#     #         # In case of new product or no product selected
+#     #             kwargs["queryset"] = Prospect.objects.none()
+#     #     return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def save_new(self, form, commit=True):
-        instance = form.save(commit=False)
-        product = Product.objects.get(pk=self.get_object_id(form))
-        if commit:
-            instance.save()
-            product.product_prospects.add(instance)
-        return instance
+#     def save_new(self, form, commit=True):
+#         instance = form.save(commit=False)
+#         product = Product.objects.get(pk=self.get_object_id(form))
+#         if commit:
+#             instance.save()
+#             product.product_prospects.add(instance)
+#         return instance
 
-    def get_object_id(self, form):
-        return form.instance.pk if form.instance.pk else self.parent_model.objects.latest('pk').pk
+#     def get_object_id(self, form):
+#         return form.instance.pk if form.instance.pk else self.parent_model.objects.latest('pk').pk
 
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'client')
     search_fields = ('name', 'client__name')
-    filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources')
+    filter_horizontal = ('assigned_users', 'qualifying_questions', 'ideal_customer_profiles', 'resources','product_rospect','use_cases')
     
-    inlines = [ProspectInline]
-    exclude = ('product_prospects',)
+    # inlines = [ProspectInline]
+    # exclude = ('product_prospects',)
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         product_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "qualifying_questions":
@@ -226,7 +226,7 @@ class ProductAdmin(admin.ModelAdmin):
         elif db_field.name == "resources":
             kwargs["queryset"] = Resource.objects.filter(products__id=product_id) if product_id else Resource.objects.all()
         elif db_field.name == "product_prospects":
-            kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) if product_id else None
+            kwargs["queryset"] = Prospect.objects.filter(product__id=product_id) if product_id else Prospect.objects.all()
         elif db_field.name == "use_cases":
             kwargs["queryset"] = UseCase.objects.filter(products__id=product_id) if product_id else UseCase.objects.all()
         
