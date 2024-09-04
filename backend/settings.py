@@ -125,7 +125,7 @@ EMAIL_HOST = 'smtp.dawdle.live'
 EMAIL_PORT = 587  # or 465 for SSL
 EMAIL_USE_TLS = True  # or EMAIL_USE_SSL = True for SSL
 EMAIL_HOST_USER = 'support@dawdle.live'
-EMAIL_HOST_PASSWORD = 'qjjoajdeqsdnrkzl'
+EMAIL_HOST_PASSWORD = 'aeycvzpxdqaixqug'
 ADMIN_EMAIL = 'support@dawdle.live'
 
 # Internationalization
