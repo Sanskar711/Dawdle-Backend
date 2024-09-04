@@ -121,7 +121,7 @@ CORS_ORIGIN_REGEX_WHITELIST = [
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.dawdle.live'
+EMAIL_HOST = 'dawdle.live'
 EMAIL_PORT = 587  # or 465 for SSL
 EMAIL_USE_TLS = True  # or EMAIL_USE_SSL = True for SSL
 EMAIL_HOST_USER = 'support@dawdle.live'
